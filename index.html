@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balanced Character Build Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one card per ability, each holding its skills, so every number a player rolls with sits in one place. */
+:root {
+  --bg: #eef0ee;
+  --panel: #fbfcfb;
+  --ink: #1d2422;
+  --muted: #5d6965;
+  --line: #cfd6d2;
+  --accent: #2f6d62;
+  --accent-soft: #d9e9e4;
+  --ok: #2d7a3e;
+  --bad: #b23a33;
+  --ok-bg: #dcefdf;
+  --bad-bg: #f5dbd8;
+  --warn-bg: #f6e8cf;
+  --warn: #a8670b;
+  --p0: #c9d3cf; --p1: #e9c9c3; --p2: #efdcc0; --p3: #e4e7c7; --p4: #cfe5d2; --p5: #b8dccb;
+  --display: "Alegreya SC", "Palatino Linotype", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141917; --panel: #1c2320; --ink: #e3e9e6; --muted: #98a6a0; --line: #2f3a36;
+    --accent: #6fbfae; --accent-soft: #23403a;
+    --ok: #7fcf8c; --bad: #f08a80; --ok-bg: #1f3a26; --bad-bg: #43221f; --warn-bg: #3d3018; --warn: #e4ad55;
+    --p0: #2a3330; --p1: #4a2a27; --p2: #46381f; --p3: #3b3f22; --p4: #24402c; --p5: #1e4a3c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141917; --panel: #1c2320; --ink: #e3e9e6; --muted: #98a6a0; --line: #2f3a36;
+  --accent: #6fbfae; --accent-soft: #23403a;
+  --ok: #7fcf8c; --bad: #f08a80; --ok-bg: #1f3a26; --bad-bg: #43221f; --warn-bg: #3d3018; --warn: #e4ad55;
+  --p0: #2a3330; --p1: #4a2a27; --p2: #46381f; --p3: #3b3f22; --p4: #24402c; --p5: #1e4a3c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--body); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 16px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.25rem; }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 700; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.note { font-size: .9rem; color: var(--muted); max-width: 70ch; margin: 0; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+input, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button { font: inherit; font-weight: 700; cursor: pointer; border-radius: 4px; padding: 7px 12px; border: 1px solid var(--accent); background: var(--accent); color: var(--panel); }
+button.ghost { background: transparent; color: var(--accent); }
+button:disabled { opacity: .35; cursor: not-allowed; }
+.chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: .82rem; font-weight: 700; }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); }
+.chip.tier { background: var(--accent-soft); color: var(--accent); }
+.chip.example { background: var(--warn-bg); color: var(--warn); }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.idgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field input { width: 100%; }
+.level-row { display: flex; gap: 8px; align-items: stretch; }
+.level-row input { flex: 1 1 auto; min-width: 0; width: auto; }
+.roll-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.die-ico { width: 20px; height: 20px; flex: none; }
+.roll-btn.rolling .die-ico { animation: dieSpin 3.5s cubic-bezier(.15, .6, .25, 1); }
+@keyframes dieSpin { 0% { transform: rotate(0) scale(1); } 70% { transform: rotate(1340deg) scale(1.35); } 100% { transform: rotate(1440deg) scale(1); } }
+#level.rolling, #name.rolling { color: var(--muted); }
+#level.landed, #name.landed { animation: levelPop .45s ease-out; }
+@keyframes levelPop { 0% { transform: scale(1.12); background: var(--accent-soft); } 100% { transform: scale(1); } }
+#level:disabled { opacity: 1; color: var(--accent); font-weight: 700; border-color: var(--accent); background: var(--accent-soft); -webkit-text-fill-color: var(--accent); }
+.lock-note { font-size: .82rem; color: var(--accent); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .roll-btn.rolling .die-ico, #level.landed, #name.landed { animation: none; } }
+
+.howto { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-size: 1.05rem; }
+.howto .die { font-family: var(--display); font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+
+.budget { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.tally { border: 1px solid var(--line); border-radius: 4px; padding: 10px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label num" "note num"; align-items: center; column-gap: 12px; row-gap: 2px; }
+.tally .label { grid-area: label; }
+.tally .note { grid-area: note; }
+.tally b { grid-area: num; font-family: var(--mono); font-size: 1.6rem; font-weight: 600; line-height: 1.1; text-align: right; }
+.tally.over { border-color: var(--bad); background: var(--bad-bg); }
+.tally.over b { color: var(--bad); }
+.tally.pending { border: 2px solid var(--warn); background: var(--warn-bg); padding: 9px 13px; }
+.tally.pending b, .tally.pending .note { color: var(--warn); }
+.tally.pending .note { font-weight: 700; }
+
+.abilities { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.ab { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); display: grid; align-content: start; }
+.ab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.ab-head h3 { font-size: 1.15rem; }
+.ab-head .what { font-size: .82rem; color: var(--muted); }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper button { width: 34px; height: 34px; padding: 0; font-size: 1.1rem; line-height: 1; }
+.big { font-family: var(--mono); font-weight: 600; font-size: 1.7rem; min-width: 2.4em; text-align: center; }
+.big.landed { animation: levelPop .45s ease-out; border-radius: 4px; }
+.cls.gamble { border-style: dashed; border-color: var(--accent); }
+.cls.gamble.on { border-style: solid; }
+.landed-box { border-top: 1px dashed var(--accent); padding-top: 6px; display: grid; gap: 4px; }
+.landed-box .label { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .big.landed { animation: none; } }
+.skills { list-style: none; margin: 0; padding: 6px 14px 10px; display: grid; }
+.skills li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.skills li:last-child { border-bottom: 0; }
+.skills label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.skills input { width: 1.1em; height: 1.1em; accent-color: var(--accent); margin: 0; }
+.skills .val { font-family: var(--mono); font-weight: 600; font-size: 1.15rem; }
+.skills li.trained .val { color: var(--accent); }
+.sk-right { display: flex; align-items: center; gap: 8px; }
+.info-btn { width: 24px; height: 24px; padding: 0; border-radius: 50%; font-size: .8rem; line-height: 1; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.info-btn[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.sk-info { flex: 1 0 100%; font-size: .9rem; color: var(--muted); margin: 2px 0 4px; max-width: 60ch; }
+.sk-info b { color: var(--ink); font-weight: 700; }
+.about { border-bottom: 1px solid var(--line); padding: 8px 14px; }
+.about summary { font-family: var(--body); font-size: .85rem; font-weight: 700; color: var(--accent); }
+.about[open] summary { margin-bottom: 6px; }
+.about p { margin: 0 0 6px; font-size: .9rem; color: var(--muted); max-width: 60ch; }
+.about p:last-child { margin-bottom: 0; }
+.about b { color: var(--ink); }
+.none { color: var(--muted); font-size: .9rem; font-style: italic; padding: 6px 0; }
+
+.caps { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.cap { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; display: grid; gap: 2px; font-size: .9rem; }
+.cap.on { border-color: var(--accent); background: var(--accent-soft); }
+.cap b { font-family: var(--mono); }
+.classes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.cls { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: grid; gap: 6px; align-content: start; }
+.cls.on { border: 2px solid var(--accent); background: var(--accent-soft); padding: 9px 11px; }
+.cls h3 { font-size: 1.05rem; }
+.cls .role { font-size: .85rem; color: var(--muted); }
+.cls .pv { font-family: var(--mono); font-size: .78rem; display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.cls .pv span.hi { color: var(--accent); font-weight: 600; }
+.cls .sk { font-size: .8rem; color: var(--muted); }
+.cls button { justify-self: start; padding: 5px 10px; font-size: .9rem; }
+.chip.cls-chip { background: var(--accent-soft); color: var(--accent); }
+
+.issues { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.issues li.bad { color: var(--bad); }
+.issues li.ok { color: var(--ok); list-style: none; margin-left: -1.1em; }
+
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 6px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+td:first-child, th:first-child { text-align: left; }
+td.pct { font-family: var(--mono); font-size: .85rem; }
+.p0 { background: var(--p0); color: var(--muted); } .p1 { background: var(--p1); } .p2 { background: var(--p2); }
+.p3 { background: var(--p3); } .p4 { background: var(--p4); } .p5 { background: var(--p5); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px; font-size: .78rem; }
+.legend span { padding: 2px 8px; border-radius: 3px; }
+details:not(.about) summary { cursor: pointer; font-family: var(--display); font-weight: 700; font-size: 1.15rem; }
+details:not(.about)[open] summary { margin-bottom: 10px; }
+
+.rules ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 72ch; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.save-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+button.danger { background: var(--bad); border-color: var(--bad); color: var(--panel); }
+.confirm-box { border: 2px solid var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 12px 14px; display: grid; gap: 12px; }
+.confirm-box strong { color: var(--bad); font-size: 1.05rem; }
+.save-actions button { width: 100%; min-height: 46px; padding: 11px 14px; font-size: 1rem; }
+textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8rem; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div style="display:grid;gap:4px">
+      <span class="label">DnD Homebrew</span>
+      <h1>Character Build Sheet</h1>
+    </div>
+    <div class="tools">
+      <span class="chip cls-chip" id="clsChip" hidden></span>
+      <span class="chip tier" id="tierChip">Tier 1</span>
+      <span class="chip ok" id="legalChip">Build legal</span>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="idgrid">
+      <div class="field">
+        <label class="label" for="name">Character name</label>
+        <div class="level-row">
+          <input id="name" type="text">
+          <button type="button" class="roll-btn" id="nameRollBtn" aria-label="Roll a random fantasy name">
+            <svg class="die-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 7 17 15H7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 2v5M3 7l4 8M21 7l-4 8M7 15l5 7 5-7" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/></svg>
+            <span>Roll name</span>
+          </button>
+        </div>
+      </div>
+      <label class="field"><span class="label">Player</span><input id="player" type="text"></label>
+      <div class="field">
+        <label class="label" for="level">Level (1–20)</label>
+        <div class="level-row">
+          <input id="level" type="number" min="1" max="20" inputmode="numeric">
+          <button type="button" class="roll-btn" id="rollBtn" aria-label="Roll a random level">
+            <svg class="die-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 7 17 15H7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 2v5M3 7l4 8M21 7l-4 8M7 15l5 7 5-7" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/></svg>
+            <span id="rollTxt">Roll level</span>
+          </button>
+        </div>
+        <span class="lock-note" id="lockNote" hidden>Level rolled and locked. Press Make new character to change it.</span>
+      </div>
+    </div>
+    <p class="note" id="exampleNote" hidden><span class="chip example">Example</span> This is a sample character so you can see how it works. Press <b>Start blank</b> to make your own.</p>
+    <div class="budget">
+      <div class="tally" id="ptsTally"><span class="label">Ability points left</span><b id="ptsLeft">0</b><span class="note" id="ptsNote"></span></div>
+      <div class="tally" id="trTally"><span class="label">Skill trainings left</span><b id="trLeft">0</b><span class="note" id="trNote"></span></div>
+      <div class="tally"><span class="label">Highest an ability can go</span><b id="abMaxShow">+3</b><span class="note">Trained skills add +2 on top</span></div>
+    </div>
+  </section>
+  <section class="panel rules">
+    <details open>
+      <summary>Build rules</summary>
+      <ol>
+        <li><b>Abilities start at +0.</b> Spend ability points to raise them, one point for each +1.</li>
+        <li><b>You can lower up to two abilities to −1.</b> Each one gives you a point back to spend elsewhere.</li>
+        <li><b>Train skills.</b> A trained skill is its ability's number +2. An untrained skill uses the ability's number.</li>
+        <li><b>New tier, more to spend.</b> Each tier gives 2 more ability points, raises the highest an ability can go by 1, and adds 1 skill training.</li>
+        <li><b>Everything else is up to the table.</b> Health, combat, gear and powers are handled by your homebrew rules, not this sheet.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section class="panel">
+    <details id="classBox">
+      <summary>Get inspiration</summary>
+      <p class="note" id="classIntro"></p>
+      <div class="classes" id="classes"></div>
+    </details>
+  </section>
+
+
+  <p class="note"><b>Ticking a skill</b> means your character is trained in it, which adds +2 to that skill's number. Skills you leave unticked use the ability's number. The tier sets how many skills you can tick. Open <b>What … does</b> or tap <b>?</b> next to a skill to see what it's used for.</p>
+  <section class="abilities" id="abilities"></section>
+
+  <section class="panel">
+    <h2>Build check</h2>
+    <ul class="issues" id="issues"></ul>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>How your character grows</summary>
+      <div class="caps" id="capsBox"></div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>Your odds against each difficulty</summary>
+      <p class="note">Chance of meeting or beating each DC. "auto" means no roll needed. "✗" means you need help from someone else or a better plan.</p>
+      <div class="legend"><span class="p0">✗</span><span class="p1">5–20%</span><span class="p2">25–40%</span><span class="p3">45–60%</span><span class="p4">65–90%</span><span class="p5">95%+ / auto</span></div>
+      <div class="scroll">
+        <table id="ladder">
+          <thead><tr><th>Roll</th><th>Number</th><th>Easy<br>10</th><th>Medium<br>15</th><th>Hard<br>20</th><th>V. Hard<br>25</th><th>Near Imp.<br>30</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <h2>Save or share this build</h2>
+    <p class="note">The sheet remembers your last build in this browser. To move it, copy the build code and paste it into another copy of this sheet.</p>
+    <div class="save-actions">
+      <button id="pdfBtn2" disabled>Download PDF to print</button>
+      <button class="ghost" id="copyBtn">Copy build code</button>
+      <button class="ghost" id="loadBtn">Load build code</button>
+      <button class="danger" id="blankBtn">Make new character</button>
+      <div class="confirm-box" id="confirmNew" hidden role="alertdialog" aria-labelledby="confirmNewTitle">
+        <strong id="confirmNewTitle">Are you sure?</strong>
+        <span class="note">This clears the name, level, abilities and skills, and unlocks the level. It can't be undone unless you've copied the build code.</span>
+        <button class="danger" id="confirmYes">Yes, make a new character</button>
+        <button class="ghost" id="confirmNo">No, keep this character</button>
+      </div>
+      <span class="note" id="toolMsg" role="status"></span>
+    </div>
+    <textarea id="codeBox" aria-label="Build code" placeholder="Build code appears here, or paste one to load"></textarea>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  const ABIL = [
+    { k: "STR", name: "Strength", what: "Power, lifting, shoving", skills: ["Athletics"] },
+    { k: "DEX", name: "Dexterity", what: "Agility, reflexes, dodging", skills: ["Acrobatics", "Sleight of Hand", "Stealth"] },
+    { k: "CON", name: "Constitution", what: "Toughness, poison, endurance", skills: [] },
+    { k: "INT", name: "Intelligence", what: "Reasoning, memory, lore", skills: ["Arcana", "History", "Investigation", "Nature", "Religion"] },
+    { k: "WIS", name: "Wisdom", what: "Awareness, instinct, willpower", skills: ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"] },
+    { k: "CHA", name: "Charisma", what: "Presence, charm, nerve", skills: ["Deception", "Intimidation", "Performance", "Persuasion"] }
+  ];
+  const ALL_SKILLS = ABIL.flatMap((a) => a.skills);
+  // Plain-language gameplay benefits shown in the collapsed explanations
+  const AB_INFO = {
+    STR: ["Roll Strength to force things: lift, push, pull, break down doors and hold on.", "<b>Saves:</b> resist being shoved, pinned, grabbed, crushed or knocked down.", "<b>Good for:</b> front-line fighters, climbers and anyone who wants to grab or shove enemies."],
+    DEX: ["Roll Dexterity for quick hands and feet: balance, aim, react first, slip out of trouble.", "<b>Saves:</b> dive clear of fireballs, traps, breath attacks and falling rocks.", "<b>Good for:</b> scouts, thieves, archers and anyone who wants to avoid getting hit."],
+    CON: ["Roll Constitution to endure: hold your breath, march without rest, go without food, stay focused while hurt.", "<b>Saves:</b> shrug off poison, disease, exhaustion and anything that drains your body.", "<b>Good for:</b> anyone who expects to take hits. It has no skills, so every Constitution roll uses this number."],
+    INT: ["Roll Intelligence to reason, remember and work things out: puzzles, codes, plans and lore.", "<b>Saves:</b> resist attacks on the mind, such as psychic blasts and illusions.", "<b>Good for:</b> scholars, spell-studiers and the player who wants to solve the mystery."],
+    WIS: ["Roll Wisdom to notice things, read situations and trust your instincts.", "<b>Saves:</b> one of the most common saves. It resists charm, fear, sleep and mind control.", "<b>Good for:</b> lookouts, healers, trackers and anyone who doesn't want to be fooled."],
+    CHA: ["Roll Charisma to influence people and hold your ground: impress, lead, bargain, stand firm.", "<b>Saves:</b> resist possession, banishment and commands from powerful beings.", "<b>Good for:</b> the party's face, leaders, tricksters and performers."]
+  };
+  const SK_INFO = {
+    "Athletics": ["Climb, swim, jump, grapple, shove and break free when grabbed.", "Climb a knotted rope (Easy) or a cliff in the rain (Hard)."],
+    "Acrobatics": ["Keep your balance, tumble past enemies, land a fall safely and wriggle out of a grip.", "Cross a narrow beam (Easy) or run across ice under fire (Hard)."],
+    "Sleight of Hand": ["Pick pockets, palm or plant objects, pick locks and disarm small traps.", "Lift a coin purse in a crowd (Medium) or swap a gem under a guard's nose (Hard)."],
+    "Stealth": ["Sneak past guards, hide, set up ambushes and follow someone unseen.", "Hide behind crates in a dark room (Easy) or sneak past an alert sentry (Hard)."],
+    "Arcana": ["Identify spells, magic items, runes and strange planes, and work out how a ward or ritual works.", "Recognise a common spell (Easy) or decode a lost wizard's sigil (Very Hard)."],
+    "History": ["Recall kingdoms, wars, noble houses, legends and ancient ruins.", "Remember a famous king (Easy) or a lost kingdom's customs (Hard)."],
+    "Investigation": ["Search for clues, find hidden compartments, work out how traps work and spot forgeries.", "Find a clue in a messy room (Easy) or spot a forged document (Hard)."],
+    "Nature": ["Identify plants, animals, terrain and weather, and know what's safe to eat or touch.", "Name a common plant (Easy) or a rare healing herb (Hard)."],
+    "Religion": ["Recognise gods, cults, holy symbols and rites, and know how to ward off undead and fiends.", "Spot a major god's symbol (Easy) or a forbidden cult's mark (Hard)."],
+    "Animal Handling": ["Calm, ride, train or read animals, and keep a mount steady in danger.", "Calm a farm dog (Easy) or a wild predator (Hard)."],
+    "Insight": ["Tell when someone is lying, nervous or hiding something, and read what they really want.", "Spot an obvious lie (Easy) or see through a skilled liar (Hard)."],
+    "Medicine": ["Stabilise a dying ally, diagnose illness or poison, and work out how something died.", "Stop an ally bleeding out (Easy) or name a magical disease (Hard)."],
+    "Perception": ["Spot hidden enemies, traps and doors, hear what others miss and avoid being surprised.", "Notice something in plain view (Easy) or an expertly hidden foe (Hard)."],
+    "Survival": ["Track creatures, find food, water and shelter, find your way and read the weather.", "Follow a fresh trail (Easy) or track over bare rock after rain (Hard)."],
+    "Deception": ["Lie convincingly, bluff, wear a disguise and create distractions.", "Tell a white lie (Easy) or fool a suspicious noble (Hard)."],
+    "Intimidation": ["Threaten, scare off enemies, make someone talk or end a fight without blows.", "Scare off a common thug (Easy) or a gang boss in their hideout (Hard)."],
+    "Performance": ["Entertain, act, play music and hold a crowd's attention, for coin or as a distraction.", "Entertain a tavern crowd (Easy) or move a hostile audience (Hard)."],
+    "Persuasion": ["Negotiate, convince, make friends with people and get better deals and favours.", "Get a friendly person's help (Easy) or win over someone unfriendly (Hard)."]
+  };
+  // Tier: levels covered, ability points, highest ability, skill trainings
+  const TIERS = [
+    { n: 1, from: 1, to: 4, pts: 6, max: 3, train: 4 },
+    { n: 2, from: 5, to: 10, pts: 8, max: 4, train: 5 },
+    { n: 3, from: 11, to: 16, pts: 10, max: 5, train: 6 },
+    { n: 4, from: 17, to: 20, pts: 12, max: 6, train: 7 }
+  ];
+  const TRAIN = 2, MIN = -1, MAX_LOWERED = 2;
+  const DCS = [10, 15, 20, 25, 30];
+  const STORE = "balanced-build-sheet-v3";
+  // Class presets: ability priority (highest first), one ability lowered to −1, skills in training order
+  const CLASSES = {
+    Barbarian: { role: "Raging front-liner who shrugs off hits", pri: ["STR", "CON", "DEX", "WIS"], dump: "INT", skills: ["Athletics", "Intimidation", "Perception", "Survival", "Animal Handling", "Nature", "Acrobatics"] },
+    Bard: { role: "Charming performer who talks the party through", pri: ["CHA", "DEX", "CON", "WIS"], dump: "STR", skills: ["Performance", "Persuasion", "Deception", "Insight", "History", "Sleight of Hand", "Acrobatics"] },
+    Cleric: { role: "Faithful healer and protector", pri: ["WIS", "CON", "STR", "CHA"], dump: "DEX", skills: ["Medicine", "Religion", "Insight", "Persuasion", "History", "Perception", "Athletics"] },
+    Druid: { role: "Nature guardian and wild-shape caster", pri: ["WIS", "CON", "DEX", "INT"], dump: "CHA", skills: ["Nature", "Survival", "Animal Handling", "Medicine", "Perception", "Insight", "Arcana"] },
+    Fighter: { role: "Trained soldier, steady in any fight", pri: ["STR", "CON", "DEX", "WIS"], dump: "INT", skills: ["Athletics", "Intimidation", "Perception", "Survival", "Acrobatics", "History", "Insight"] },
+    Monk: { role: "Quick, disciplined martial artist", pri: ["DEX", "WIS", "CON", "STR"], dump: "CHA", skills: ["Acrobatics", "Stealth", "Insight", "Athletics", "Perception", "Religion", "History"] },
+    Paladin: { role: "Holy knight with a sworn oath", pri: ["STR", "CHA", "CON", "WIS"], dump: "DEX", skills: ["Athletics", "Persuasion", "Religion", "Intimidation", "Insight", "Medicine", "Perception"] },
+    Ranger: { role: "Tracker and hunter of the wilds", pri: ["DEX", "WIS", "CON", "STR"], dump: "CHA", skills: ["Survival", "Perception", "Stealth", "Nature", "Animal Handling", "Athletics", "Investigation"] },
+    Rogue: { role: "Sneaky specialist in locks and lies", pri: ["DEX", "INT", "WIS", "CHA"], dump: "STR", skills: ["Stealth", "Sleight of Hand", "Acrobatics", "Perception", "Investigation", "Deception", "Insight"] },
+    Sorcerer: { role: "Born with raw magic in the blood", pri: ["CHA", "CON", "DEX", "WIS"], dump: "STR", skills: ["Arcana", "Persuasion", "Deception", "Intimidation", "Insight", "Religion", "Performance"] },
+    Warlock: { role: "Caster bound by a pact with a patron", pri: ["CHA", "CON", "DEX", "INT"], dump: "STR", skills: ["Arcana", "Deception", "Intimidation", "History", "Investigation", "Religion", "Insight"] },
+    Wizard: { role: "Scholar of spells and secrets", pri: ["INT", "CON", "DEX", "WIS"], dump: "STR", skills: ["Arcana", "History", "Investigation", "Religion", "Nature", "Insight", "Medicine"] }
+  };
+  // Spend a tier's points the way the class wants: top ability to the max, second to max −1, then +1s down the list
+  function presetFor(name, t) {
+    const c = CLASSES[name], ab = {};
+    ABIL.forEach((a) => (ab[a.k] = 0));
+    ab[c.dump] = -1;
+    let left = t.pts + 1;
+    const give = (k, cap) => { const n = Math.max(0, Math.min(cap - ab[k], left)); ab[k] += n; left -= n; };
+    give(c.pri[0], t.max);
+    give(c.pri[1], t.max - 1);
+    for (let i = 2; left > 0 && i < 40; i++) give(c.pri[2 + (i % 2)], Math.min(t.max, ab[c.pri[2 + (i % 2)]] + 1));
+    for (const k of c.pri) if (left > 0) give(k, t.max);
+    return { ab, trained: c.skills.slice(0, t.train) };
+  }
+  let gambling = false;
+  const DIE_SVG = '<svg class="die-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 7 17 15H7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 2v5M3 7l4 8M21 7l-4 8M7 15l5 7 5-7" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/></svg>';
+  // Gamble: a random build that still follows every rule for the tier
+  function randomBuild(t) {
+    const ab = {};
+    ABIL.forEach((a) => (ab[a.k] = 0));
+    const keys = ABIL.map((a) => a.k).sort(() => Math.random() - 0.5);
+    const lowered = keys.slice(0, Math.floor(Math.random() * (MAX_LOWERED + 1)));
+    lowered.forEach((k) => (ab[k] = -1));
+    let left = t.pts + lowered.length;
+    while (left > 0) {
+      const open = keys.filter((k) => !lowered.includes(k) && ab[k] < t.max);
+      if (!open.length) break;
+      ab[pick(open)] += 1; left -= 1;
+    }
+    const trained = ALL_SKILLS.slice().sort(() => Math.random() - 0.5).slice(0, t.train);
+    return { ab, trained };
+  }
+  function applyClass(name) {
+    const p = name === "Gamble" ? randomBuild(tierOf(S.level)) : presetFor(name, tierOf(S.level));
+    S.cls = name; S.ab = p.ab; S.trained = p.trained;
+    S.gamble = name === "Gamble" ? { tier: tierOf(S.level).n, ab: { ...p.ab }, trained: p.trained.slice() } : null;
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const clampInt = (v, lo, hi, d) => { v = parseInt(v, 10); if (isNaN(v)) v = d; return Math.max(lo, Math.min(hi, v)); };
+  const sign = (n) => (n >= 0 ? "+" : "−") + Math.abs(n);
+  const tierOf = (lvl) => TIERS.find((t) => lvl >= t.from && lvl <= t.to);
+
+  function blank() {
+    const s = { name: "", player: "", level: 1, levelLocked: false, cls: "", example: false, ab: {}, trained: [] };
+    ABIL.forEach((a) => (s.ab[a.k] = 0));
+    return s;
+  }
+  function example() {
+    const s = blank();
+    Object.assign(s, { name: "Vessa Thorn", player: "Example", level: 3, example: true });
+    Object.assign(s.ab, { STR: -1, DEX: 3, CON: 1, INT: 1, WIS: 2, CHA: 0 });
+    s.trained = ["Stealth", "Acrobatics", "Perception", "Investigation"];
+    return s;
+  }
+  function normalize(o) {
+    const s = blank();
+    if (!o || typeof o !== "object") return s;
+    ["name", "player"].forEach((k) => { if (typeof o[k] === "string") s[k] = o[k].slice(0, 80); });
+    s.level = clampInt(o.level, 1, 20, 1);
+    s.example = !!o.example;
+    s.levelLocked = !!o.levelLocked;
+    s.cls = CLASSES[o.cls] || o.cls === "Gamble" ? o.cls : "";
+    const g = o.gamble;
+    s.gamble = g && g.ab && Array.isArray(g.trained) ? { tier: clampInt(g.tier, 1, 4, 1), ab: Object.fromEntries(ABIL.map((a) => [a.k, clampInt(g.ab[a.k], MIN, 6, 0)])), trained: g.trained.filter((k) => ALL_SKILLS.includes(k)) } : null;
+    ABIL.forEach((a) => (s.ab[a.k] = clampInt(o.ab && o.ab[a.k], MIN, 6, 0)));
+    s.trained = Array.isArray(o.trained) ? o.trained.filter((k) => ALL_SKILLS.includes(k)) : [];
+    return s;
+  }
+
+  let S = null;
+  try { const raw = localStorage.getItem(STORE); if (raw) S = normalize(JSON.parse(raw)); } catch (e) { S = null; }
+  if (!S) S = blank();
+
+  // Build ability cards once
+  $("abilities").innerHTML = ABIL.map((a) =>
+    `<article class="ab">
+      <div class="ab-head">
+        <div><h3>${a.name}</h3><div class="what">${a.what}</div></div>
+        <div class="stepper">
+          <button class="ghost" data-step="-1" data-ab="${a.k}" aria-label="Lower ${a.name}">−</button>
+          <span class="big" id="ab-${a.k}">+0</span>
+          <button class="ghost" data-step="1" data-ab="${a.k}" aria-label="Raise ${a.name}">+</button>
+        </div>
+      </div>
+      <details class="about"><summary>What ${a.name} does</summary>${AB_INFO[a.k].map((t) => `<p>${t}</p>`).join("")}</details>
+      <ul class="skills">${a.skills.length ? a.skills.map((sk, j) => {
+        const id = `info-${a.k}-${j}`;
+        return `<li data-skill="${sk}"><label><input type="checkbox" data-skill="${sk}"> ${sk}</label>` +
+          `<span class="sk-right"><span class="val"></span><button type="button" class="info-btn" aria-expanded="false" aria-controls="${id}" aria-label="What ${sk} does">?</button></span>` +
+          `<div class="sk-info" id="${id}" hidden><b>Use it to:</b> ${SK_INFO[sk][0]} <b>Example:</b> ${SK_INFO[sk][1]}</div></li>`;
+      }).join("")
+        : `<li class="none">No skills. Roll ${a.name} on its own.</li>`}</ul>
+    </article>`).join("");
+
+  function compute() {
+    const t = tierOf(S.level);
+    const spent = ABIL.reduce((n, a) => n + S.ab[a.k], 0); // a −1 refunds a point
+    const lowered = ABIL.filter((a) => S.ab[a.k] < 0).length;
+    const issues = [];
+    if (spent > t.pts) issues.push(`You've spent ${spent - t.pts} ability point${spent - t.pts > 1 ? "s" : ""} too many. Lower an ability.`);
+    const tooHigh = ABIL.filter((a) => S.ab[a.k] > t.max);
+    if (tooHigh.length) issues.push(`${tooHigh.map((a) => a.name).join(", ")} ${tooHigh.length > 1 ? "are" : "is"} above +${t.max}, the highest for tier ${t.n}.`);
+    if (lowered > MAX_LOWERED) issues.push(`Only ${MAX_LOWERED} abilities can be lowered to −1.`);
+    if (S.trained.length > t.train) issues.push(`${S.trained.length} skills are trained. Tier ${t.n} allows ${t.train}.`);
+    return { t, spent, lowered, issues };
+  }
+
+  function render() {
+    const R = compute(), t = R.t;
+    $("exampleNote").hidden = !S.example;
+    $("tierChip").textContent = `Tier ${t.n} · levels ${t.from}–${t.to}`;
+    $("clsChip").hidden = !S.cls;
+    $("clsChip").textContent = S.cls;
+    $("classIntro").innerHTML = `Pick a class to fill in your abilities and skills for <b>tier ${t.n}</b> (levels ${t.from}–${t.to}). It spends all ${t.pts} ability points and ${t.train} skill trainings for you. You can still change anything afterwards.`;
+    if (!gambling) $("classes").innerHTML = Object.keys(CLASSES).map((n) => {
+      const c = CLASSES[n], p = presetFor(n, t);
+      return `<article class="cls${S.cls === n ? " on" : ""}"><h3>${n}</h3><div class="role">${c.role}</div>` +
+        `<div class="pv">${ABIL.map((a) => `<span class="${c.pri.slice(0, 2).includes(a.k) ? "hi" : ""}">${a.k} ${sign(p.ab[a.k])}</span>`).join("")}</div>` +
+        `<div class="sk">Trained: ${p.trained.join(", ")}</div>` +
+        `<button type="button" class="${S.cls === n ? "" : "ghost"}" data-class="${n}">${S.cls === n ? "Reapply " + n : "Use " + n}</button></article>`;
+    }).join("") +
+      `<article class="cls gamble${S.cls === "Gamble" ? " on" : ""}"><h3>Gamble</h3>` +
+      `<div class="role">Let the dice decide. Rolls random abilities and skills that still follow the tier ${t.n} rules.</div>` +
+      `<div class="sk">Every roll spends all ${t.pts} points and ${t.train} trainings.</div>` +
+      (S.cls === "Gamble" && S.gamble ? `<div class="landed-box"><span class="label">You landed on · tier ${S.gamble.tier}</span>` +
+        `<div class="pv">${ABIL.map((a) => `<span class="${S.gamble.ab[a.k] === Math.max(...Object.values(S.gamble.ab)) ? "hi" : ""}">${a.k} ${sign(S.gamble.ab[a.k])}</span>`).join("")}</div>` +
+        `<div class="sk">Trained: ${S.gamble.trained.join(", ")}</div></div>` : "") +
+      `<button type="button" class="roll-btn" id="gambleBtn">${DIE_SVG}<span>${S.cls === "Gamble" ? "Roll again" : "Roll build"}</span></button></article>`;
+    $("legalChip").className = "chip " + (R.issues.length ? "bad" : "ok");
+    $("legalChip").textContent = R.issues.length ? `${R.issues.length} thing${R.issues.length > 1 ? "s" : ""} to fix` : "Build legal";
+
+    const left = t.pts - R.spent;
+    $("ptsLeft").textContent = left;
+    $("ptsTally").classList.toggle("over", left < 0);
+    $("ptsTally").classList.toggle("pending", left > 0);
+    $("ptsNote").textContent = left > 0 ? `Still to spend · ${t.pts} at tier ${t.n}` : `${t.pts} to spend at tier ${t.n}`;
+    const trLeft = t.train - S.trained.length;
+    $("trLeft").textContent = trLeft;
+    $("trTally").classList.toggle("over", trLeft < 0);
+    $("trTally").classList.toggle("pending", trLeft > 0);
+    $("trNote").textContent = trLeft > 0 ? `Still to pick · ${t.train} at tier ${t.n}` : `${t.train} at tier ${t.n}, each worth +${TRAIN}`;
+    $("abMaxShow").textContent = sign(t.max);
+
+    ABIL.forEach((a) => {
+      const v = S.ab[a.k];
+      $("ab-" + a.k).textContent = sign(v);
+      document.querySelector(`[data-ab="${a.k}"][data-step="-1"]`).disabled = v <= MIN || (v === 0 && R.lowered >= MAX_LOWERED);
+      document.querySelector(`[data-ab="${a.k}"][data-step="1"]`).disabled = v >= t.max || left <= 0;
+      a.skills.forEach((sk) => {
+        const li = document.querySelector(`li[data-skill="${sk}"]`);
+        const on = S.trained.includes(sk);
+        li.classList.toggle("trained", on);
+        const box = li.querySelector("input");
+        box.checked = on;
+        box.disabled = !on && trLeft <= 0;
+        li.querySelector(".val").textContent = sign(v + (on ? TRAIN : 0));
+      });
+    });
+
+    $("issues").innerHTML = R.issues.length
+      ? R.issues.map((i) => `<li class="bad">${i}</li>`).join("")
+      : `<li class="ok">✓ All points and trainings are within tier ${t.n}.</li>`;
+
+    $("capsBox").innerHTML = TIERS.map((x) =>
+      `<div class="cap${x === t ? " on" : ""}"><span class="label">Tier ${x.n} · levels ${x.from}–${x.to}</span>` +
+      `<span>Ability points <b>${x.pts}</b></span><span>Highest ability <b>+${x.max}</b></span>` +
+      `<span>Skill trainings <b>${x.train}</b></span><span>Best roll <b>+${x.max + TRAIN}</b></span></div>`).join("");
+
+    const rows = [];
+    ABIL.forEach((a) => {
+      rows.push({ label: `<b>${a.name}</b>`, val: S.ab[a.k] });
+      a.skills.filter((sk) => S.trained.includes(sk)).forEach((sk) => rows.push({ label: `&nbsp;&nbsp;${sk} (trained)`, val: S.ab[a.k] + TRAIN }));
+    });
+    document.querySelector("#ladder tbody").innerHTML = rows.map((r) =>
+      `<tr><td>${r.label}</td><td class="num">${sign(r.val)}</td>` + DCS.map((dc) => {
+        const need = dc - r.val;
+        const p = need <= 1 ? 100 : need > 20 ? 0 : (21 - need) * 5;
+        const cls = p <= 0 ? "p0" : p <= 20 ? "p1" : p <= 40 ? "p2" : p <= 60 ? "p3" : p <= 90 ? "p4" : "p5";
+        return `<td class="pct ${cls}">${need <= 1 ? "auto" : need > 20 ? "✗" : p + "%"}</td>`;
+      }).join("") + `</tr>`).join("");
+
+    try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {}
+  }
+
+  function fill() {
+    $("name").value = S.name; $("player").value = S.player; $("level").value = S.level;
+    $("level").disabled = S.levelLocked;
+    $("rollBtn").disabled = S.levelLocked || rolling;
+    $("rollTxt").textContent = S.levelLocked ? "Locked" : "Roll level";
+    $("lockNote").hidden = !S.levelLocked;
+  }
+
+  // Random fantasy names: given name from syllables, family name from two word parts.
+  // About 60 x 34 given names and 48 x 44 family names, so millions of combinations from a few KB.
+  const NAME_PRE = ["Aer", "Al", "Ard", "Bel", "Bran", "Bry", "Cael", "Cor", "Cyr", "Dar", "Del", "Dra", "Eir", "Eld", "El", "Fae", "Fen", "Gal", "Gar", "Gwen", "Hal", "Hav", "Is", "Ith", "Jor", "Kael", "Kes", "Kor", "Lir", "Lor", "Lun", "Mal", "Mir", "Mor", "Nev", "Nym", "Or", "Os", "Per", "Quel", "Ren", "Rhov", "Ser", "Sor", "Syl", "Tal", "Tam", "Thal", "Tor", "Ul", "Val", "Ves", "Vor", "Wyn", "Xan", "Yor", "Ys", "Zar", "Brom", "Ilv"];
+  const NAME_SUF = ["a", "ara", "as", "en", "ena", "eth", "ia", "iel", "in", "ion", "is", "ith", "on", "or", "ora", "os", "ric", "ryn", "wen", "wyn", "ius", "anor", "adel", "ari", "ira", "ane", "eon", "ael", "ish", "orn", "una", "ian", "elle", "ok"];
+  const FAM_A = ["Ash", "Black", "Bright", "Storm", "Thorn", "Iron", "Silver", "Oak", "Raven", "Stone", "Frost", "Gold", "Moon", "Red", "Shadow", "Star", "Swift", "Wolf", "Dawn", "Ember", "Fair", "Grey", "High", "Hollow", "Mist", "River", "Rose", "Snow", "Sun", "Wind", "Winter", "Amber", "Bramble", "Copper", "Deep", "Elder", "Glen", "Hart", "Lark", "Moss", "Night", "Pine", "Quill", "Salt", "Thistle", "Vale", "Fern", "Flint"];
+  const FAM_B = ["blade", "brook", "wood", "fall", "field", "ford", "forge", "heart", "helm", "hill", "hold", "mane", "mantle", "shield", "song", "vale", "water", "wind", "whisper", "crest", "born", "bough", "brand", "bright", "cloak", "cliff", "dale", "fire", "gard", "glade", "horn", "leaf", "light", "more", "ridge", "run", "shade", "spark", "spire", "stride", "thorn", "ward", "weaver", "wick"];
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  function randomName() {
+    let a, b;
+    do { a = pick(FAM_A); b = pick(FAM_B); } while (a.toLowerCase() === b || a.toLowerCase().endsWith(b));
+    return pick(NAME_PRE) + pick(NAME_SUF) + " " + a + b;
+  }
+  let nameRolling = false;
+  $("nameRollBtn").addEventListener("click", () => {
+    if (nameRolling) return;
+    nameRolling = true;
+    const btn = $("nameRollBtn"), inp = $("name");
+    btn.disabled = true;
+    let tick = null;
+    const finish = () => {
+      clearInterval(tick);
+      nameRolling = false;
+      S.name = randomName();
+      touched(); fill(); render();
+      btn.disabled = false;
+      btn.classList.remove("rolling"); inp.classList.remove("rolling");
+      inp.classList.remove("landed"); void inp.offsetWidth; inp.classList.add("landed");
+      msg(`Rolled the name ${S.name}.`);
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { finish(); return; }
+    btn.classList.add("rolling"); inp.classList.add("rolling");
+    spin(() => { inp.value = randomName(); }, finish);
+  });
+
+  // Random level: one roll per character, then the level is locked
+  let rolling = false;
+  $("rollBtn").addEventListener("click", () => {
+    if (S.levelLocked || rolling) return;
+    rolling = true;
+    const btn = $("rollBtn"), lv = $("level");
+    btn.disabled = true; lv.disabled = true;
+    const finish = () => {
+      clearInterval(tick);
+      rolling = false;
+      S.level = 1 + Math.floor(Math.random() * 20);
+      S.levelLocked = true;
+      if (S.cls) applyClass(S.cls);
+      touched(); fill(); render();
+      btn.classList.remove("rolling"); lv.classList.remove("rolling");
+      lv.classList.remove("landed"); void lv.offsetWidth; lv.classList.add("landed");
+      msg(`Rolled level ${S.level}.`);
+    };
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let tick = null;
+    if (reduce) { finish(); return; }
+    btn.classList.add("rolling"); lv.classList.add("rolling");
+    spin(() => { lv.value = 1 + Math.floor(Math.random() * 20); }, finish);
+  });
+  function touched() { S.example = false; }
+  // Suspense roll: fast flicker that slows down and lands at 3.5 seconds
+  const ROLL_MS = 3500;
+  function spin(step, done) {
+    let delay = 45, elapsed = 0;
+    const next = () => {
+      step();
+      if (elapsed + delay >= ROLL_MS) { setTimeout(done, ROLL_MS - elapsed); return; }
+      elapsed += delay;
+      setTimeout(next, delay);
+      delay = Math.min(delay * 1.12, 450);
+    };
+    next();
+  }
+  function gamble() {
+    if (gambling) return;
+    gambling = true;
+    const btn = $("gambleBtn"), t = tierOf(S.level);
+    btn.disabled = true;
+    let tick = null;
+    const finish = () => {
+      clearInterval(tick);
+      applyClass("Gamble");
+      touched(); fill();
+      gambling = false;
+      render();
+      document.querySelectorAll(".big").forEach((el) => { el.classList.remove("landed"); void el.offsetWidth; el.classList.add("landed"); });
+      msg(`Gamble rolled a new tier ${t.n} build.`);
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { finish(); return; }
+    btn.classList.add("rolling");
+    spin(() => { const p = randomBuild(t); S.ab = p.ab; S.trained = p.trained; render(); }, finish);
+  }
+  $("classes").addEventListener("click", (ev) => {
+    if (ev.target.closest("#gambleBtn")) { gamble(); return; }
+    const b = ev.target.closest("button[data-class]");
+    if (!b) return;
+    applyClass(b.dataset.class);
+    touched(); fill(); render();
+    msg(`${b.dataset.class} build applied for tier ${tierOf(S.level).n}.`);
+  });
+
+  document.addEventListener("click", (ev) => {
+    const info = ev.target.closest(".info-btn");
+    if (info) {
+      const open = info.getAttribute("aria-expanded") !== "true";
+      info.setAttribute("aria-expanded", String(open));
+      $(info.getAttribute("aria-controls")).hidden = !open;
+      return;
+    }
+    const b = ev.target.closest("button[data-step]");
+    if (!b) return;
+    const k = b.dataset.ab;
+    S.ab[k] = clampInt(S.ab[k] + Number(b.dataset.step), MIN, 6, 0);
+    touched(); render();
+  });
+  document.addEventListener("change", (ev) => {
+    const sk = ev.target.dataset && ev.target.dataset.skill;
+    if (sk) {
+      S.trained = S.trained.filter((x) => x !== sk);
+      if (ev.target.checked) S.trained.push(sk);
+      touched(); render();
+    }
+    if (ev.target.id === "level" && !S.levelLocked) { S.level = clampInt(ev.target.value, 1, 20, S.level); fill(); touched(); render(); }
+  });
+  ["name", "player"].forEach((id) => $(id).addEventListener("input", (ev) => { S[id] = ev.target.value.slice(0, 80); touched(); render(); }));
+  $("level").addEventListener("input", (ev) => { if (S.levelLocked) return; const v = parseInt(ev.target.value, 10); if (v >= 1 && v <= 20) { S.level = v; touched(); render(); } });
+
+  const msg = (t) => { $("toolMsg").textContent = t; };
+  $("copyBtn").addEventListener("click", () => {
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+    $("codeBox").value = code;
+    const fallback = () => { $("codeBox").select(); msg("Build code selected. Copy it with Ctrl+C or Cmd+C."); };
+    try { navigator.clipboard.writeText(code).then(() => msg("Build code copied."), fallback); } catch (e) { fallback(); }
+  });
+  $("loadBtn").addEventListener("click", () => {
+    const v = $("codeBox").value.trim();
+    if (!v) { msg("Paste a build code into the box first."); return; }
+    try { S = normalize(JSON.parse(decodeURIComponent(escape(atob(v))))); fill(); render(); msg("Build loaded."); }
+    catch (e) { msg("That build code couldn't be read. Check the whole code was pasted."); }
+  });
+  const closeConfirm = () => { $("confirmNew").hidden = true; $("blankBtn").hidden = false; };
+  $("blankBtn").addEventListener("click", () => {
+    $("blankBtn").hidden = true; $("confirmNew").hidden = false; $("confirmNo").focus();
+  });
+  $("confirmNo").addEventListener("click", () => { closeConfirm(); $("blankBtn").focus(); msg("Kept this character."); });
+  $("confirmYes").addEventListener("click", () => {
+    closeConfirm();
+    S = blank(); fill(); render(); msg("New character started.");
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: smooth ? "smooth" : "auto" });
+    $("name").focus({ preventScroll: true });
+  });
+
+  // ---- Printable PDF character sheet ----
+  const pm = (n) => (n >= 0 ? "+" : "-") + Math.abs(n); // PDF fonts have no true minus sign
+  function buildPdf() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const t = tierOf(S.level), M = 14, W = 210 - M * 2;
+    const ink = [29, 36, 34], muted = [93, 105, 101], accent = [47, 109, 98], line = [190, 200, 196];
+    const col = (c) => doc.setTextColor(...c);
+
+    // Header
+    doc.setFont("times", "bold"); doc.setFontSize(24); col(ink);
+    doc.text(S.name || "Unnamed hero", M, M + 8);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); col(muted);
+    doc.text(`Player: ${S.player || "-"}     ${S.cls ? "Class: " + S.cls + "     " : ""}Level ${S.level}     Tier ${t.n} (levels ${t.from}-${t.to})`, M, M + 15);
+    doc.setDrawColor(...accent); doc.setLineWidth(0.6); doc.line(M, M + 19, M + W, M + 19);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); col(accent);
+    doc.text("Roll d20 + your number. Meet or beat the DC to succeed.", M, M + 27);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); col(muted);
+    doc.text("Ability number = plain ability roll or saving throw.   Skill number = when the DM calls for that skill.   \u2022 = trained (+2)", M, M + 33);
+
+    // Ability boxes, 2 columns x 3 rows
+    const gap = 6, bw = (W - gap) / 2, bh = 50, top = M + 39;
+    ABIL.forEach((a, i) => {
+      const x = M + (i % 2) * (bw + gap), y = top + Math.floor(i / 2) * (bh + 5);
+      const v = S.ab[a.k];
+      doc.setDrawColor(...line); doc.setLineWidth(0.3); doc.roundedRect(x, y, bw, bh, 2, 2);
+      doc.setFillColor(217, 233, 228); doc.roundedRect(x, y, bw, 14, 2, 2, "F"); doc.rect(x, y + 10, bw, 4, "F");
+      doc.setFont("times", "bold"); doc.setFontSize(14); col(ink);
+      doc.text(a.name.toUpperCase(), x + 4, y + 9);
+      doc.setFont("courier", "bold"); doc.setFontSize(20); col(accent);
+      doc.text(pm(v), x + bw - 4, y + 10, { align: "right" });
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+      let ry = y + 21;
+      if (!a.skills.length) {
+        col(muted); doc.setFont("helvetica", "italic");
+        doc.text("No skills. Every Constitution roll and save uses " + pm(v) + ".", x + 4, ry, { maxWidth: bw - 8 });
+      }
+      a.skills.forEach((sk) => {
+        const on = S.trained.includes(sk);
+        doc.setDrawColor(...(on ? accent : line));
+        if (on) { doc.setFillColor(...accent); doc.circle(x + 6, ry - 1.2, 1.4, "F"); } else doc.circle(x + 6, ry - 1.2, 1.4, "S");
+        doc.setFont("helvetica", on ? "bold" : "normal"); col(on ? ink : muted);
+        doc.text(sk, x + 10, ry);
+        doc.setFont("courier", "bold"); col(on ? accent : ink);
+        doc.text(pm(v + (on ? TRAIN : 0)), x + bw - 4, ry, { align: "right" });
+        doc.setDrawColor(...line); doc.setLineDashPattern([0.6, 0.8], 0); doc.line(x + 10, ry + 2, x + bw - 4, ry + 2); doc.setLineDashPattern([], 0);
+        ry += 6.2;
+      });
+    });
+
+    // DC ladder
+    const dy = top + 3 * bh + 2 * 5 + 7;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); col(muted);
+    doc.text("DIFFICULTY", M, dy);
+    const tiers = [["Easy", 10], ["Medium", 15], ["Hard", 20], ["Very Hard", 25], ["Nearly Impossible", 30]];
+    const tw = W / tiers.length;
+    tiers.forEach(([n, dc], i) => {
+      const x = M + i * tw;
+      doc.setDrawColor(...line); doc.rect(x, dy + 2, tw, 14);
+      doc.setFont("courier", "bold"); doc.setFontSize(14); col(ink);
+      doc.text(String(dc), x + tw / 2, dy + 9, { align: "center" });
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8); col(muted);
+      doc.text(n, x + tw / 2, dy + 14, { align: "center" });
+    });
+
+    // Notes area for the homebrew rules
+    const ny = dy + 23;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); col(muted);
+    doc.text("NOTES  (health, gear, powers and anything else from your homebrew rules)", M, ny);
+    doc.setDrawColor(...line);
+    for (let ly = ny + 8; ly < 297 - M - 4; ly += 7) doc.line(M, ly, M + W, ly);
+    doc.setFontSize(7); col(muted);
+    doc.text("DnD Homebrew  -  Character Build Sheet", M, 297 - 8);
+    return doc.output("blob");
+  }
+
+  let downloads = null;
+  const pdfBtns = [$("pdfBtn2")];
+  const pdfReady = () => !!(window.jspdf && window.jspdf.jsPDF);
+  async function savePdf() {
+    if (!pdfReady()) { msg("The PDF maker didn't load. Refresh the page and try again."); return; }
+    const filename = (S.name.trim() || "character").replace(/[^\w \-]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() + "-sheet.pdf";
+    const blob = buildPdf();
+    if (downloads) {
+      try { await downloads.save({ filename, data: blob }); msg("PDF saved. Open it and print from there."); }
+      catch (e) { msg(e && e.code === "declined" ? "Download cancelled." : "This view can't save files. Open the sheet in a browser to download the PDF."); }
+      return;
+    }
+    // Opened as a plain file outside Claude: a normal browser download works
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    msg("PDF downloaded. Open it and print from there.");
+  }
+  pdfBtns.forEach((b) => b.addEventListener("click", savePdf));
+  const enablePdf = () => pdfBtns.forEach((b) => (b.disabled = !pdfReady()));
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("downloads").then((d) => {
+      downloads = d;
+      if (!d) { pdfBtns.forEach((b) => (b.hidden = true)); return; }
+      enablePdf();
+    }, () => pdfBtns.forEach((b) => (b.hidden = true)));
+  } else enablePdf();
+
+  fill(); render();
+})();
+</script>
+
+</html>
