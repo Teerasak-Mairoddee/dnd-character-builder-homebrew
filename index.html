@@ -43,7 +43,7 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-/* Phone-only bar that keeps the two "left" counters in view while scrolling */
+/* Bar that keeps the two "left" counters in view while scrolling */
 .float-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
 .fb-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; font-size: .8rem; font-weight: 700; color: var(--muted); }
 .fb-item b { font-family: var(--mono); font-size: 1.2rem; color: var(--ink); }
@@ -51,7 +51,7 @@
 .fb-item.pending b { color: var(--warn); }
 .fb-item.over { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
 .fb-item.over b { color: var(--bad); }
-@media (min-width: 701px) { .float-bar { display: none !important; } }
+@media (min-width: 701px) { .float-bar { padding-inline: max(16px, calc((100% - 1100px) / 2 + 16px)); } }
 body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--body); }
 .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 16px; }
 h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
