@@ -172,6 +172,7 @@ details:not(.about)[open] summary { margin-bottom: 10px; }
 button.danger { background: var(--bad); border-color: var(--bad); color: var(--panel); }
 .confirm-box { border: 2px solid var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 12px 14px; display: grid; gap: 12px; }
 .confirm-box strong { color: var(--bad); font-size: 1.05rem; }
+.copy-clip { width: 100%; min-height: 46px; padding: 11px 14px; font-size: 1rem; }
 .save-actions button { width: 100%; min-height: 46px; padding: 11px 14px; font-size: 1rem; }
 textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8rem; }
 </style>
@@ -289,7 +290,8 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
       </div>
       <span class="note" id="toolMsg" role="status"></span>
     </div>
-    <textarea id="codeBox" aria-label="Build code" placeholder="Build code appears here, or paste one to load"></textarea>
+    <textarea id="codeBox" aria-label="Share link or build code" placeholder="Your share link or build code appears here. You can also paste a build code to load it."></textarea>
+    <button class="ghost copy-clip" id="clipBtn" disabled>Copy to clipboard</button>
   </section>
 </div>
 
@@ -790,18 +792,35 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   $("level").addEventListener("input", (ev) => { if (S.levelLocked) return; const v = parseInt(ev.target.value, 10); if (v >= 1 && v <= 20) { S.level = v; touched(); render(); } });
 
   const msg = (t) => { $("toolMsg").textContent = t; };
+  // Copy with the modern clipboard, then the older select-and-copy, then ask the viewer to copy by hand
+  function copyText(text, okMsg) {
+    const box = $("codeBox");
+    const legacy = () => {
+      box.focus(); box.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      msg(ok ? okMsg : "Text selected. Copy it with Ctrl+C or Cmd+C.");
+    };
+    try { navigator.clipboard.writeText(text).then(() => msg(okMsg), legacy); } catch (e) { legacy(); }
+  }
+  const syncClip = () => { $("clipBtn").disabled = !$("codeBox").value.trim(); };
+  $("codeBox").addEventListener("input", syncClip);
+  $("clipBtn").addEventListener("click", () => {
+    const v = $("codeBox").value.trim();
+    if (v) copyText(v, v.startsWith("http") ? "Share link copied." : "Build code copied.");
+  });
   $("shareBtn").addEventListener("click", () => {
     const link = SITE_URL + "#build=" + toB64Url(S);
     $("codeBox").value = link;
-    const fallback = () => { $("codeBox").select(); msg("Link selected. Copy it with Ctrl+C or Cmd+C."); };
-    try { navigator.clipboard.writeText(link).then(() => msg("Share link copied. Anyone who opens it sees this build."), fallback); } catch (e) { fallback(); }
+    syncClip();
+    copyText(link, "Share link copied. Anyone who opens it sees this build.");
   });
   if (sharedLoaded) setTimeout(() => msg("Loaded a shared build."), 0);
   $("copyBtn").addEventListener("click", () => {
     const code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));
     $("codeBox").value = code;
-    const fallback = () => { $("codeBox").select(); msg("Build code selected. Copy it with Ctrl+C or Cmd+C."); };
-    try { navigator.clipboard.writeText(code).then(() => msg("Build code copied."), fallback); } catch (e) { fallback(); }
+    syncClip();
+    copyText(code, "Build code copied.");
   });
   $("loadBtn").addEventListener("click", () => {
     const v = $("codeBox").value.trim();
