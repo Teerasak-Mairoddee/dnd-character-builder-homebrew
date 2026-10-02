@@ -276,6 +276,7 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     <p class="note">The sheet remembers your last build in this browser. To move it, copy the build code and paste it into another copy of this sheet.</p>
     <div class="save-actions">
       <button id="pdfBtn2" disabled>Download PDF to print</button>
+      <button id="shareBtn">Share with link</button>
       <button class="ghost" id="copyBtn">Copy build code</button>
       <button class="ghost" id="loadBtn">Load build code</button>
       <button class="danger" id="blankBtn">Make new character</button>
@@ -518,6 +519,19 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   let S = null;
   try { const raw = localStorage.getItem(STORE); if (raw) S = normalize(JSON.parse(raw)); } catch (e) { S = null; }
   if (!S) S = blank();
+  // A shared link carries the build after #build= ; it wins over whatever this browser remembered
+  const SITE_URL = "https://teerasak-mairoddee.github.io/dnd-character-builder-homebrew/";
+  const toB64Url = (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const fromB64Url = (t) => { t = t.replace(/-/g, "+").replace(/_/g, "/"); while (t.length % 4) t += "="; return JSON.parse(decodeURIComponent(escape(atob(t)))); };
+  let sharedLoaded = false;
+  try {
+    const m = /[#&?]build=([A-Za-z0-9_\-+/=]+)/.exec(location.hash + "&" + location.search);
+    if (m) {
+      S = normalize(fromB64Url(m[1]));
+      sharedLoaded = true;
+      history.replaceState(null, "", location.pathname);
+    }
+  } catch (e) { /* a broken link falls back to the remembered build */ }
 
   // Build ability cards once
   $("abilities").innerHTML = ABIL.map((a) =>
@@ -775,6 +789,13 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   $("level").addEventListener("input", (ev) => { if (S.levelLocked) return; const v = parseInt(ev.target.value, 10); if (v >= 1 && v <= 20) { S.level = v; touched(); render(); } });
 
   const msg = (t) => { $("toolMsg").textContent = t; };
+  $("shareBtn").addEventListener("click", () => {
+    const link = SITE_URL + "#build=" + toB64Url(S);
+    $("codeBox").value = link;
+    const fallback = () => { $("codeBox").select(); msg("Link selected. Copy it with Ctrl+C or Cmd+C."); };
+    try { navigator.clipboard.writeText(link).then(() => msg("Share link copied. Anyone who opens it sees this build."), fallback); } catch (e) { fallback(); }
+  });
+  if (sharedLoaded) setTimeout(() => msg("Loaded a shared build."), 0);
   $("copyBtn").addEventListener("click", () => {
     const code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));
     $("codeBox").value = code;
