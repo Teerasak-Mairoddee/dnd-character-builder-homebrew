@@ -43,6 +43,15 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+/* Phone-only bar that keeps the two "left" counters in view while scrolling */
+.float-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+.fb-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; font-size: .8rem; font-weight: 700; color: var(--muted); }
+.fb-item b { font-family: var(--mono); font-size: 1.2rem; color: var(--ink); }
+.fb-item.pending { border: 2px solid var(--warn); background: var(--warn-bg); padding: 5px 9px; color: var(--warn); }
+.fb-item.pending b { color: var(--warn); }
+.fb-item.over { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+.fb-item.over b { color: var(--bad); }
+@media (min-width: 701px) { .float-bar { display: none !important; } }
 body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--body); }
 .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 16px; }
 h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
@@ -177,6 +186,10 @@ button.danger { background: var(--bad); border-color: var(--bad); color: var(--p
 textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8rem; }
 </style>
 
+<div class="float-bar" id="floatBar" hidden aria-live="polite">
+  <div class="fb-item" id="fbPts"><span>Ability points left</span><b id="fbPtsN">0</b></div>
+  <div class="fb-item" id="fbTr"><span>Skill trainings left</span><b id="fbTrN">0</b></div>
+</div>
 <div class="wrap">
   <header class="top">
     <div style="display:grid;gap:4px">
@@ -604,6 +617,9 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     $("trLeft").textContent = trLeft;
     $("trTally").classList.toggle("over", trLeft < 0);
     $("trTally").classList.toggle("pending", trLeft > 0);
+    $("fbPtsN").textContent = left; $("fbTrN").textContent = trLeft;
+    $("fbPts").classList.toggle("pending", left > 0); $("fbPts").classList.toggle("over", left < 0);
+    $("fbTr").classList.toggle("pending", trLeft > 0); $("fbTr").classList.toggle("over", trLeft < 0);
     $("trNote").textContent = trLeft > 0 ? `Still to pick · ${t.train} at tier ${t.n}` : `${t.train} at tier ${t.n}, each worth +${TRAIN}`;
     $("abMaxShow").textContent = sign(t.max);
 
@@ -945,6 +961,14 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
       enablePdf();
     }, () => pdfBtns.forEach((b) => (b.hidden = true)));
   } else enablePdf();
+
+  // Show the floating counters once the real counters have scrolled off the top
+  const budgetEl = document.querySelector(".budget");
+  if (budgetEl && "IntersectionObserver" in window) {
+    new IntersectionObserver(([e]) => {
+      $("floatBar").hidden = e.isIntersecting || e.boundingClientRect.top > 0;
+    }).observe(budgetEl);
+  }
 
   fill(); render();
 })();
