@@ -43,6 +43,20 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+.radars { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.radar { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.radar figcaption { font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+.radar svg { width: 100%; height: auto; max-width: 540px; justify-self: center; display: block; overflow: visible; }
+.radar .grid { fill: none; stroke: var(--line); stroke-width: 1; }
+.radar .zero { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.radar .spoke { stroke: var(--line); stroke-width: 1; }
+.radar .shape { fill: var(--accent); fill-opacity: .18; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.radar .pt { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.radar .pt.tr { fill: var(--panel); stroke: var(--accent); stroke-width: 2.5; }
+.radar .hit { fill: transparent; }
+.radar text { fill: var(--muted); font-family: var(--body); font-size: 11px; }
+.radar text.ax { fill: var(--ink); font-weight: 700; }
+.radar .val { fill: var(--accent); font-family: var(--mono); font-weight: 600; }
 /* Bar that keeps the two "left" counters in view while scrolling */
 .float-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
 .fb-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; font-size: .8rem; font-weight: 700; color: var(--muted); }
@@ -269,6 +283,17 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     <details>
       <summary>How your character grows</summary>
       <div class="caps" id="capsBox"></div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>Character shape</summary>
+      <p class="note">How your numbers spread out. The further a point reaches toward the outer ring, the better you are at it. The outer ring is the best roll your tier allows, and the dashed ring is +0.</p>
+      <div class="radars">
+        <figure class="radar"><figcaption>Abilities</figcaption><div id="radarAb"></div></figure>
+        <figure class="radar"><figcaption>Skills</figcaption><div id="radarSk"></div></figure>
+      </div>
     </details>
   </section>
 
@@ -583,6 +608,30 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     return { t, spent, lowered, issues };
   }
 
+  function radarSVG(items, max, showVals) {
+    const W = 540, H = 410, cx = W / 2, cy = H / 2, R = 128, min = -1, n = items.length;
+    const rad = (v) => R * (v - min) / (max - min);
+    const at = (i, r) => { const ang = -Math.PI / 2 + (2 * Math.PI * i) / n; return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)]; };
+    const ring = (r) => items.map((_, i) => at(i, r).map((v) => v.toFixed(1)).join(",")).join(" ");
+    let g = "";
+    for (let v = min + 1; v <= max; v++) g += `<polygon class="${v === 0 ? "zero" : "grid"}" points="${ring(rad(v))}"/>`;
+    items.forEach((_, i) => { const [x, y] = at(i, R); g += `<line class="spoke" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; });
+    const [mx, my] = at(0, R);
+    g += `<text x="${mx + 4}" y="${my + 12}">+${max}</text>`;
+    g += `<polygon class="shape" points="${items.map((it, i) => at(i, rad(Math.max(min, Math.min(max, it.val)))).map((v) => v.toFixed(1)).join(",")).join(" ")}"/>`;
+    items.forEach((it, i) => {
+      const [x, y] = at(i, rad(Math.max(min, Math.min(max, it.val))));
+      const tip = `${it.label}: ${sign(it.val)}${it.trained ? " (trained)" : ""}`;
+      g += `<circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11"><title>${tip}</title></circle>`;
+      g += `<circle class="pt${it.trained ? " tr" : ""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${it.trained ? 4.5 : 4}"><title>${tip}</title></circle>`;
+      const [lx, ly] = at(i, R + 16);
+      const anchor = Math.abs(lx - cx) < 8 ? "middle" : lx > cx ? "start" : "end";
+      const dy = ly < cy - R + 10 ? -2 : ly > cy + R - 10 ? (anchor === "middle" ? 18 : 10) : 4;
+      g += `<text class="ax" x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}" text-anchor="${anchor}">${it.label} <tspan class="val">${sign(it.val)}</tspan></text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${items.map((it) => it.label + " " + sign(it.val)).join(", ")}">${g}</svg>`;
+  }
+
   function render() {
     const R = compute(), t = R.t;
     $("exampleNote").hidden = !S.example;
@@ -653,6 +702,13 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
       rows.push({ label: `<b>${a.name}</b>`, val: S.ab[a.k] });
       a.skills.filter((sk) => S.trained.includes(sk)).forEach((sk) => rows.push({ label: `&nbsp;&nbsp;${sk} (trained)`, val: S.ab[a.k] + TRAIN }));
     });
+    // Radar charts: one series each, scale from −1 to the best roll this tier allows
+    const rMax = t.max + TRAIN;
+    $("radarAb").innerHTML = radarSVG(ABIL.map((a) => ({ label: a.name, val: S.ab[a.k] })), rMax, true);
+    $("radarSk").innerHTML = radarSVG(ALL_SKILLS.map((sk) => {
+      const a = ABIL.find((x) => x.skills.includes(sk)), on = S.trained.includes(sk);
+      return { label: sk, val: S.ab[a.k] + (on ? TRAIN : 0), trained: on };
+    }), rMax, false);
     document.querySelector("#ladder tbody").innerHTML = rows.map((r) =>
       `<tr><td>${r.label}</td><td class="num">${sign(r.val)}</td>` + DCS.map((dc) => {
         const need = dc - r.val;
