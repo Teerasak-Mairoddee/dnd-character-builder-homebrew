@@ -115,6 +115,12 @@ header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: 
 .skills .val { font-family: var(--mono); font-weight: 600; font-size: 1.15rem; }
 .skills li.trained .val { color: var(--accent); }
 .sk-right { display: flex; align-items: center; gap: 8px; }
+.cls-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hint-btn { width: 26px; height: 26px; padding: 0; border-radius: 50%; font-size: .85rem; line-height: 1; background: transparent; color: var(--muted); border: 1px solid var(--line); flex: none; }
+.hint-btn[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.hint { border-top: 1px dashed var(--line); padding-top: 8px; display: grid; gap: 6px; font-size: .88rem; color: var(--muted); }
+.hint p { margin: 0; }
+.hint b { color: var(--ink); }
 .info-btn { width: 24px; height: 24px; padding: 0; border-radius: 50%; font-size: .8rem; line-height: 1; background: transparent; color: var(--muted); border: 1px solid var(--line); }
 .info-btn[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 .sk-info { flex: 1 0 100%; font-size: .9rem; color: var(--muted); margin: 2px 0 4px; max-width: 60ch; }
@@ -351,6 +357,95 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     Warlock: { role: "Caster bound by a pact with a patron", pri: ["CHA", "CON", "DEX", "INT"], dump: "STR", skills: ["Arcana", "Deception", "Intimidation", "History", "Investigation", "Religion", "Insight"] },
     Wizard: { role: "Scholar of spells and secrets", pri: ["INT", "CON", "DEX", "WIS"], dump: "STR", skills: ["Arcana", "History", "Investigation", "Religion", "Nature", "Insight", "Medicine"] }
   };
+  // Longer "how to play" guides behind each card's hint button: how it plays, strengths, watch out for, table tip
+  const HINTS = {
+    "Barbarian": [
+    "You charge in first and hit hardest when you're angry. In a fight, ask the DM for Strength and Athletics rolls to grab, shove, smash through doors and wrestle enemies to the ground.",
+    "Huge Strength and Constitution, so you rarely fail to force something and you shrug off poison and exhaustion.",
+    "Low Intelligence means lore, puzzles and mind attacks are risky. Let a smarter friend read the runes.",
+    "Describe what your rage looks like. When a problem can be solved by lifting, breaking or scaring it, volunteer."
+    ],
+    "Bard": [
+    "You're the voice of the party: storyteller, musician and smooth talker. Most of your big moments are social, talking past guards, winning over crowds and spotting lies.",
+    "Charisma skills like Persuasion, Deception and Performance, plus enough Dexterity to stay out of trouble.",
+    "Low Strength, so leave the heavy lifting and grappling to others.",
+    "Offer to do the talking with every NPC. A good bit of in-character speech can earn advantage from the DM."
+    ],
+    "Cleric": [
+    "You serve a god and keep the party standing. You heal, protect and deal with the undead and the divine.",
+    "Wisdom for willpower and Insight, Medicine to save dying friends, and Religion for anything holy or unholy.",
+    "Low Dexterity means you're not quick or sneaky. Don't be the one crossing the narrow ledge.",
+    "Pick a god and one rule they expect you to follow. It gives the DM story hooks and you clear roleplay choices."
+    ],
+    "Druid": [
+    "You speak for the wild. You read nature, calm beasts and survive anywhere outdoors, and many tables let druids take animal forms.",
+    "Wisdom with Nature, Survival and Animal Handling, so travel, foraging and wildlife are your territory.",
+    "Low Charisma makes city politics and fast talk hard. You're more comfortable with wolves than nobles.",
+    "Ask what the land, weather or animals can tell you. You'll often spot dangers before anyone else."
+    ],
+    "Fighter": [
+    "You're a trained warrior, reliable in any battle. You're less flashy than a barbarian but steady, with solid Strength and toughness.",
+    "Athletics, Intimidation and Perception keep you useful in and out of combat, and your saves hold up well.",
+    "Low Intelligence leaves lore and puzzles to others.",
+    "Decide where you trained (army, arena or mercenary band). It explains your skills and gives you old allies and rivals."
+    ],
+    "Monk": [
+    "You're a disciplined martial artist who relies on speed and inner calm rather than armor. You move fast, dodge well and stay hard to fool.",
+    "Dexterity and Wisdom, so Acrobatics, Stealth and Insight are strong, and you resist charm and fear.",
+    "Low Charisma makes persuading and performing tough. You're better at actions than words.",
+    "Describe your movement. Running along walls, catching arrows or slipping past guards are great uses for Acrobatics."
+    ],
+    "Paladin": [
+    "You're a holy knight bound by an oath. You defend the weak, lead from the front and back your words with steel.",
+    "Strength for Athletics plus Charisma for Persuasion and Intimidation. You can both fight and inspire.",
+    "Low Dexterity means stealth and reflexes are weak spots. Expect to be seen coming.",
+    "Write your oath in one sentence. When a choice tests it, play it out. That's where paladins shine."
+    ],
+    "Ranger": [
+    "You hunt and track in the wild places between towns. You find the trail, scout ahead and strike from range.",
+    "Dexterity and Wisdom with Survival, Perception and Stealth, so you're the party's eyes and guide.",
+    "Low Charisma makes social scenes awkward. Let someone else negotiate.",
+    "Volunteer to scout and track. Ask the DM what you notice about tracks, weather and terrain before the party moves."
+    ],
+    "Rogue": [
+    "You're the specialist in locks, traps, shadows and lies. You get in where others can't and handle the delicate jobs.",
+    "Dexterity skills like Stealth, Sleight of Hand and Acrobatics, plus Intelligence for Investigation.",
+    "Low Strength, so climbing heavy walls or wrestling is risky. Use cleverness instead of muscle.",
+    "Always have a plan B. Scout first, then tell the party what you found so everyone can use it."
+    ],
+    "Sorcerer": [
+    "Magic is in your blood, raw and powerful, and sometimes hard to control. You rely on presence and confidence as much as spells.",
+    "Charisma with Arcana, Persuasion and Intimidation, and Constitution to keep focus under pressure.",
+    "Low Strength makes physical tasks hard. Stay out of grapples.",
+    "Decide where your magic came from, like a dragon ancestor or a storm at your birth. Let it show when you're emotional."
+    ],
+    "Warlock": [
+    "You made a pact with a powerful patron who gives you magic and asks for something in return. You're mysterious, persuasive and steeped in forbidden lore.",
+    "Charisma for Deception and Intimidation, plus Arcana and Investigation for dark secrets.",
+    "Low Strength, so physical challenges are weak spots.",
+    "Agree with the DM on who your patron is and what they want. Their demands make great surprise plot twists."
+    ],
+    "Wizard": [
+    "You're a scholar of magic who learned your power from books and study. You know things, solve puzzles and understand the arcane.",
+    "Intelligence with Arcana, History and Investigation. When the party needs to know something, ask you.",
+    "Low Strength makes heavy lifting and grapples dangerous.",
+    "Keep notes on what you learn in play. Asking the DM 'what do I know about this?' is your superpower."
+    ],
+    "Gamble": [
+    "Let the dice build your hero, then work out who they are. Random builds make surprising characters, like a charming barbarian or a clumsy rogue.",
+    "Anything goes. You'll often end up with an unusual mix of skills nobody else in the party has.",
+    "Your highest number might not match the role you pictured, and you may have gaps in obvious places.",
+    "Look at your top two abilities and best skills, then invent a backstory that explains them. That's the fun of it."
+    ]
+    };
+  const openHints = new Set();
+  const hintHtml = (n) => {
+    const open = openHints.has(n), h = HINTS[n];
+    return {
+      btn: `<button type="button" class="hint-btn" data-hint="${n}" aria-expanded="${open}" aria-label="How to play ${n}">?</button>`,
+      body: open ? `<div class="hint"><p><b>How it plays:</b> ${h[0]}</p><p><b>Strengths:</b> ${h[1]}</p><p><b>Watch out for:</b> ${h[2]}</p><p><b>Tip:</b> ${h[3]}</p></div>` : ""
+    };
+  };
   // Spend a tier's points the way the class wants: top ability to the max, second to max −1, then +1s down the list
   function presetFor(name, t) {
     const c = CLASSES[name], ab = {};
@@ -467,12 +562,13 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     $("classIntro").innerHTML = `Pick a class to fill in your abilities and skills for <b>tier ${t.n}</b> (levels ${t.from}–${t.to}). It spends all ${t.pts} ability points and ${t.train} skill trainings for you. You can still change anything afterwards.`;
     if (!gambling) $("classes").innerHTML = Object.keys(CLASSES).map((n) => {
       const c = CLASSES[n], p = presetFor(n, t);
-      return `<article class="cls${S.cls === n ? " on" : ""}"><h3>${n}</h3><div class="role">${c.role}</div>` +
+      const hh = hintHtml(n);
+      return `<article class="cls${S.cls === n ? " on" : ""}"><div class="cls-head"><h3>${n}</h3>${hh.btn}</div><div class="role">${c.role}</div>${hh.body}` +
         `<div class="pv">${ABIL.map((a) => `<span class="${c.pri.slice(0, 2).includes(a.k) ? "hi" : ""}">${a.k} ${sign(p.ab[a.k])}</span>`).join("")}</div>` +
         `<div class="sk">Trained: ${p.trained.join(", ")}</div>` +
         `<button type="button" class="${S.cls === n ? "" : "ghost"}" data-class="${n}">${S.cls === n ? "Reapply " + n : "Use " + n}</button></article>`;
     }).join("") +
-      `<article class="cls gamble${S.cls === "Gamble" ? " on" : ""}"><h3>Gamble</h3>` +
+      `<article class="cls gamble${S.cls === "Gamble" ? " on" : ""}"><div class="cls-head"><h3>Gamble</h3>${hintHtml("Gamble").btn}</div>${hintHtml("Gamble").body}` +
       `<div class="role">Let the dice decide. Rolls random abilities and skills that still follow the tier ${t.n} rules.</div>` +
       `<div class="sk">Every roll spends all ${t.pts} points and ${t.train} trainings.</div>` +
       (S.cls === "Gamble" && S.gamble ? `<div class="landed-box"><span class="label">You landed on · tier ${S.gamble.tier}</span>` +
@@ -636,6 +732,15 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   }
   $("classes").addEventListener("click", (ev) => {
     if (ev.target.closest("#gambleBtn")) { gamble(); return; }
+    const hb = ev.target.closest("button[data-hint]");
+    if (hb) {
+      const n = hb.dataset.hint;
+      openHints.has(n) ? openHints.delete(n) : openHints.add(n);
+      render();
+      const again = document.querySelector(`button[data-hint="${n}"]`);
+      if (again) again.focus();
+      return;
+    }
     const b = ev.target.closest("button[data-class]");
     if (!b) return;
     applyClass(b.dataset.class);
