@@ -997,102 +997,106 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const t = tierOf(S.level), M = 14, W = 210 - M * 2;
-    const ink = [29, 36, 34], muted = [93, 105, 101], accent = [47, 109, 98], line = [190, 200, 196];
+    // Parchment and crimson, one serif family throughout
+    const ink = [43, 29, 20], muted = [112, 88, 64], accent = [128, 24, 24], gold = [170, 132, 58], line = [206, 188, 152], parch = [242, 231, 206], paper = [252, 248, 237];
     const col = (c) => doc.setTextColor(...c);
+    const F = (style, size, c) => { doc.setFont("times", style); doc.setFontSize(size); col(c); };
+    const page = () => {
+      doc.setFillColor(...paper); doc.rect(0, 0, 210, 297, "F");
+      doc.setDrawColor(...gold); doc.setLineWidth(0.8); doc.rect(7, 7, 196, 283);
+      doc.setLineWidth(0.25); doc.rect(8.6, 8.6, 192.8, 279.8);
+    };
+    const rule = (y) => {
+      doc.setDrawColor(...gold); doc.setLineWidth(0.5); doc.line(M + 3, y, M + W - 3, y);
+      doc.setFillColor(...gold);
+      [M + 1.6, M + W - 1.6].forEach((x) => { doc.triangle(x - 1.6, y, x, y - 1.6, x + 1.6, y, "F"); doc.triangle(x - 1.6, y, x, y + 1.6, x + 1.6, y, "F"); });
+    };
+    const heading = (txt, y) => { F("bold", 9.5, accent); doc.text(txt.toUpperCase(), M, y, { charSpace: 0.6 }); };
+    page();
 
     // Header
-    doc.setFont("times", "bold"); doc.setFontSize(24); col(ink);
-    doc.text(S.name || "Unnamed hero", M, M + 8);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(10); col(muted);
-    doc.text(`Player: ${S.player || "-"}     ${S.cls ? "Class: " + S.cls + "     " : ""}Level ${S.level}     Tier ${t.n} (levels ${t.from}-${t.to})`, M, M + 15);
-    doc.setDrawColor(...accent); doc.setLineWidth(0.6); doc.line(M, M + 19, M + W, M + 19);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(12); col(accent);
-    doc.text("Roll d20 + your number. Meet or beat the DC to succeed.", M, M + 27);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9); col(muted);
-    doc.text("Ability number = plain ability roll or saving throw.   Skill number = when the DM calls for that skill.   \u2022 = trained (+2)", M, M + 33);
+    F("bold", 26, ink);
+    doc.text(S.name || "Unnamed hero", M, M + 10);
+    F("italic", 11, muted);
+    doc.text(`Player: ${S.player || "-"}     ${S.cls ? "Class: " + S.cls + "     " : ""}Level ${S.level}     Tier ${t.n} (levels ${t.from}-${t.to})`, M, M + 17);
+    rule(M + 21);
 
-    // Ability boxes, 2 columns x 3 rows
-    const gap = 6, bw = (W - gap) / 2, bh = 50, top = M + 39;
-    ABIL.forEach((a, i) => {
-      const x = M + (i % 2) * (bw + gap), y = top + Math.floor(i / 2) * (bh + 5);
-      const v = S.ab[a.k];
-      doc.setDrawColor(...line); doc.setLineWidth(0.3); doc.roundedRect(x, y, bw, bh, 2, 2);
-      doc.setFillColor(217, 233, 228); doc.roundedRect(x, y, bw, 14, 2, 2, "F"); doc.rect(x, y + 10, bw, 4, "F");
-      doc.setFont("times", "bold"); doc.setFontSize(14); col(ink);
-      doc.text(a.name.toUpperCase(), x + 4, y + 9);
-      doc.setFont("courier", "bold"); doc.setFontSize(20); col(accent);
-      doc.text(pm(v), x + bw - 4, y + 10, { align: "right" });
-      doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-      let ry = y + 21;
-      if (!a.skills.length) {
-        col(muted); doc.setFont("helvetica", "italic");
-        doc.text("No skills. Every Constitution roll and save uses " + pm(v) + ".", x + 4, ry, { maxWidth: bw - 8 });
-      }
-      a.skills.forEach((sk) => {
-        const on = S.trained.includes(sk);
-        doc.setDrawColor(...(on ? accent : line));
-        if (on) { doc.setFillColor(...accent); doc.circle(x + 6, ry - 1.2, 1.4, "F"); } else doc.circle(x + 6, ry - 1.2, 1.4, "S");
-        doc.setFont("helvetica", on ? "bold" : "normal"); col(on ? ink : muted);
-        doc.text(sk, x + 10, ry);
-        doc.setFont("courier", "bold"); col(on ? accent : ink);
-        doc.text(pm(v + (on ? TRAIN : 0)), x + bw - 4, ry, { align: "right" });
-        doc.setDrawColor(...line); doc.setLineDashPattern([0.6, 0.8], 0); doc.line(x + 10, ry + 2, x + bw - 4, ry + 2); doc.setLineDashPattern([], 0);
-        ry += 6.2;
-      });
-    });
+    // About: the player's intro, straight under the header
+    let y = M + 29;
+    const intro = pdfIntro();
+    if (intro) {
+      heading("About " + (S.name.trim() || "this hero"), y);
+      F("normal", 11, ink);
+      const lines = doc.splitTextToSize(intro, W);
+      doc.text(lines, M, y + 6, { lineHeightFactor: 1.3 });
+      y += 6 + lines.length * 11 * 1.3 * 0.3528 + 5;
+    }
 
-    // DC ladder
-    const dy = top + 3 * bh + 2 * 5 + 7;
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9); col(muted);
-    doc.text("DIFFICULTY", M, dy);
+    // Difficulty strip
+    heading("Difficulty", y);
     const tiers = [["Easy", 10], ["Medium", 15], ["Hard", 20], ["Very Hard", 25], ["Nearly Impossible", 30]];
     const tw = W / tiers.length;
     tiers.forEach(([n, dc], i) => {
       const x = M + i * tw;
-      doc.setDrawColor(...line); doc.rect(x, dy + 2, tw, 14);
-      doc.setFont("courier", "bold"); doc.setFontSize(14); col(ink);
-      doc.text(String(dc), x + tw / 2, dy + 9, { align: "center" });
-      doc.setFont("helvetica", "normal"); doc.setFontSize(8); col(muted);
-      doc.text(n, x + tw / 2, dy + 14, { align: "center" });
+      doc.setFillColor(...parch); doc.setDrawColor(...line); doc.setLineWidth(0.3); doc.rect(x, y + 2.5, tw, 14, "FD");
+      F("bold", 15, accent); doc.text(String(dc), x + tw / 2, y + 9.5, { align: "center" });
+      F("italic", 9, muted); doc.text(n, x + tw / 2, y + 14.5, { align: "center" });
     });
+    y += 21;
 
-    // About: the collated intro from the lore boxes, if any were filled
-    let ny = dy + 23;
-    const intro = pdfIntro();
-    if (intro) {
-      doc.setFont("helvetica", "bold"); doc.setFontSize(9); col(muted);
-      doc.text("ABOUT " + (S.name.trim() || "THIS HERO").toUpperCase(), M, ny);
-      doc.setFont("times", "normal"); doc.setFontSize(10.5); col(ink);
-      const lines = doc.splitTextToSize(intro, W);
-      doc.text(lines, M, ny + 6, { lineHeightFactor: 1.3 });
-      ny += 6 + lines.length * 10.5 * 1.3 * 0.3528 + 5;
-    }
-    // Notes area for the homebrew rules
-    // A long intro leaves no room, so the notes move to the foot of page 2
-    const notes = (y) => {
-      doc.setFont("helvetica", "bold"); doc.setFontSize(9); col(muted);
-      doc.text("NOTES  (health, gear, powers and anything else from your homebrew rules)", M, y);
+    // Ability boxes, 2 columns x 3 rows
+    const gap = 6, bw = (W - gap) / 2, bh = 50;
+    ABIL.forEach((a, i) => {
+      const x = M + (i % 2) * (bw + gap), by = y + Math.floor(i / 2) * (bh + 5);
+      const v = S.ab[a.k];
+      doc.setFillColor(255, 253, 247); doc.setDrawColor(...line); doc.setLineWidth(0.3); doc.roundedRect(x, by, bw, bh, 2, 2, "FD");
+      doc.setFillColor(...parch); doc.roundedRect(x, by, bw, 14, 2, 2, "F"); doc.rect(x, by + 10, bw, 4, "F");
+      doc.setDrawColor(...gold); doc.setLineWidth(0.4); doc.line(x, by + 14, x + bw, by + 14);
+      F("bold", 14, ink); doc.text(a.name.toUpperCase(), x + 4, by + 9.3, { charSpace: 0.4 });
+      F("bold", 20, accent); doc.text(pm(v), x + bw - 4, by + 10.3, { align: "right" });
+      let ry = by + 21;
+      if (!a.skills.length) {
+        F("italic", 10.5, muted);
+        doc.text("No skills. Every Constitution roll and save uses " + pm(v) + ".", x + 4, ry, { maxWidth: bw - 8 });
+      }
+      a.skills.forEach((sk) => {
+        const on = S.trained.includes(sk);
+        doc.setLineWidth(0.3); doc.setDrawColor(...(on ? accent : muted));
+        if (on) { doc.setFillColor(...accent); doc.circle(x + 6, ry - 1.2, 1.4, "F"); } else doc.circle(x + 6, ry - 1.2, 1.4, "S");
+        F(on ? "bold" : "normal", 11, on ? ink : muted); doc.text(sk, x + 10, ry);
+        F("bold", 11, on ? accent : ink); doc.text(pm(v + (on ? TRAIN : 0)), x + bw - 4, ry, { align: "right" });
+        doc.setDrawColor(...line); doc.setLineDashPattern([0.6, 0.8], 0); doc.line(x + 10, ry + 2, x + bw - 4, ry + 2); doc.setLineDashPattern([], 0);
+        ry += 6.2;
+      });
+    });
+    let ny = y + 3 * bh + 2 * 5 + 8;
+
+    // Notes area for the homebrew rules; a long intro leaves no room, so they move to the foot of page 2
+    const notes = (ny) => {
+      heading("Notes", ny);
+      F("italic", 9, muted); doc.text("Health, gear, powers and anything else from your homebrew rules", M + 16, ny);
       doc.setDrawColor(...line); doc.setLineWidth(0.3);
-      for (let ly = y + 8; ly < 297 - M - 4; ly += 7) doc.line(M, ly, M + W, ly);
+      for (let ly = ny + 8; ly < 297 - M - 4; ly += 7) doc.line(M, ly, M + W, ly);
     };
-    const notesHere = 297 - M - 4 - ny >= 26;
+    const notesHere = 297 - M - 4 - ny >= 14;
     if (notesHere) notes(ny);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(7); col(muted);
-    doc.text("DnD Homebrew  -  Character Build Sheet", M, 297 - 8);
+    F("italic", 8, muted);
+    doc.text("DnD Homebrew  -  Character Build Sheet", 105, 297 - 11, { align: "center" });
 
     // Page 2: odds of meeting each DC for every ability and skill
-    doc.addPage();
+    doc.addPage(); page();
     doc.setFont("times", "bold"); doc.setFontSize(20); col(ink);
-    doc.text(`${S.name || "Unnamed hero"}: odds against each difficulty`, M, M + 8);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9); col(muted);
-    doc.text("Chance to meet or beat each DC on a plain d20.  auto = no roll needed.  X = needs help or a better plan.", M, M + 15);
-    const fills = { p0: [201, 211, 207], p1: [233, 201, 195], p2: [239, 220, 192], p3: [228, 231, 199], p4: [207, 229, 210], p5: [184, 220, 203] };
+    doc.text(`${S.name || "Unnamed hero"}: odds against each difficulty`, M, M + 10);
+    doc.setFont("times", "italic"); doc.setFontSize(10); col(muted);
+    doc.text("Chance to meet or beat each DC on a plain d20.  auto = no roll needed.  X = needs help or a better plan.", M, M + 16.5);
+    rule(M + 20.5);
+    const fills = { p0: [221, 211, 194], p1: [232, 192, 180], p2: [240, 216, 176], p3: [234, 228, 184], p4: [212, 226, 188], p5: [188, 212, 168] };
     const band = (p) => (p <= 0 ? "p0" : p <= 20 ? "p1" : p <= 40 ? "p2" : p <= 60 ? "p3" : p <= 90 ? "p4" : "p5");
     const cols = [["Roll", 62], ["Number", 20], ["Easy 10", 20], ["Medium 15", 20], ["Hard 20", 20], ["V. Hard 25", 20], ["Near Imp. 30", 20]];
-    let ty = M + 24;
+    let ty = M + 28;
     const rowH = 8.4;
     let cx = M;
-    doc.setFont("helvetica", "bold"); doc.setFontSize(8); col(muted);
+    doc.setFont("times", "bold"); doc.setFontSize(8); col(muted);
     cols.forEach(([h, w], i) => { doc.text(h.toUpperCase(), i ? cx + w / 2 : cx + 1, ty, { align: i ? "center" : "left" }); cx += w; });
     ty += 3;
     doc.setDrawColor(...line); doc.setLineWidth(0.3); doc.line(M, ty, M + W, ty);
@@ -1103,16 +1107,16 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     });
     rows.forEach((r) => {
       let x = M;
-      doc.setFont("helvetica", r.head ? "bold" : r.on ? "bold" : "normal"); doc.setFontSize(r.head ? 10 : 9); col(r.head || r.on ? ink : muted);
+      doc.setFont("times", r.head ? "bold" : r.on ? "bold" : "normal"); doc.setFontSize(r.head ? 10 : 9); col(r.head || r.on ? ink : muted);
       doc.text(r.head ? r.label : "   " + r.label, x + 1, ty + rowH / 2 + 1.4);
       x += cols[0][1];
-      doc.setFont("courier", "bold"); doc.setFontSize(10); col(r.on ? accent : ink);
+      doc.setFont("times", "bold"); doc.setFontSize(10); col(r.on ? accent : ink);
       doc.text(pm(r.val), x + cols[1][1] / 2, ty + rowH / 2 + 1.4, { align: "center" });
       x += cols[1][1];
       DCS.forEach((dc, j) => {
         const need = dc - r.val, p = need <= 1 ? 100 : need > 20 ? 0 : (21 - need) * 5;
         doc.setFillColor(...fills[band(p)]); doc.rect(x + 0.4, ty + 0.4, cols[j + 2][1] - 0.8, rowH - 0.8, "F");
-        doc.setFont("courier", "normal"); doc.setFontSize(9); col(ink);
+        doc.setFont("times", "normal"); doc.setFontSize(9); col(ink);
         doc.text(need <= 1 ? "auto" : need > 20 ? "X" : p + "%", x + cols[j + 2][1] / 2, ty + rowH / 2 + 1.3, { align: "center" });
         x += cols[j + 2][1];
       });
@@ -1123,11 +1127,11 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     ty += 7;
     const legend = [["p0", "X"], ["p1", "5-20%"], ["p2", "25-40%"], ["p3", "45-60%"], ["p4", "65-90%"], ["p5", "95%+ / auto"]];
     let lx = M;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    doc.setFont("times", "normal"); doc.setFontSize(8);
     legend.forEach(([k, t]) => { doc.setFillColor(...fills[k]); doc.rect(lx, ty - 3.5, 22, 5.5, "F"); col(ink); doc.text(t, lx + 11, ty, { align: "center" }); lx += 24; });
     if (!notesHere) notes(ty + 12);
     doc.setFontSize(7); col(muted);
-    doc.text("DnD Homebrew  -  Character Build Sheet  -  page 2", M, 297 - 8);
+    doc.setFont("times", "italic"); doc.text("DnD Homebrew  -  Character Build Sheet  -  page 2", 105, 297 - 11, { align: "center" });
     return doc.output("blob");
   }
 
