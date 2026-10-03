@@ -98,20 +98,23 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 
 header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
 .idgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
-.field { display: grid; gap: 4px; min-width: 0; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; }
 .field input { width: 100%; }
 .level-row { display: flex; gap: 8px; align-items: stretch; }
-.level-row input { flex: 1 1 auto; min-width: 0; width: auto; }
+.level-row input, .level-row select { flex: 1 1 auto; min-width: 0; width: auto; }
+select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; }
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#raceCustom { margin-top: 6px; }
 .roll-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .die-ico { width: 20px; height: 20px; flex: none; }
 .roll-btn.rolling .die-ico { animation: dieSpin 3.5s cubic-bezier(.15, .6, .25, 1); }
 @keyframes dieSpin { 0% { transform: rotate(0) scale(1); } 70% { transform: rotate(1340deg) scale(1.35); } 100% { transform: rotate(1440deg) scale(1); } }
-#level.rolling, #name.rolling { color: var(--muted); }
-#level.landed, #name.landed { animation: levelPop .45s ease-out; }
+#level.rolling, #name.rolling, #race.rolling { color: var(--muted); }
+#level.landed, #name.landed, #race.landed { animation: levelPop .45s ease-out; }
 @keyframes levelPop { 0% { transform: scale(1.12); background: var(--accent-soft); } 100% { transform: scale(1); } }
 #level:disabled { opacity: 1; color: var(--accent); font-weight: 700; border-color: var(--accent); background: var(--accent-soft); -webkit-text-fill-color: var(--accent); }
 .lock-note { font-size: .82rem; color: var(--accent); font-weight: 700; }
-@media (prefers-reduced-motion: reduce) { .roll-btn.rolling .die-ico, #level.landed, #name.landed { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .roll-btn.rolling .die-ico, #level.landed, #name.landed, #race.landed { animation: none; } }
 
 .howto { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-size: 1.05rem; }
 .howto .die { font-family: var(--display); font-size: 1.4rem; font-weight: 700; color: var(--accent); }
@@ -238,6 +241,17 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
             <span>Roll name</span>
           </button>
         </div>
+      </div>
+      <div class="field">
+        <label class="label" for="race">Race</label>
+        <div class="level-row">
+          <select id="race"></select>
+          <button type="button" class="roll-btn" id="raceRollBtn" aria-label="Roll a random race">
+            <svg class="die-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 7 17 15H7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 2v5M3 7l4 8M21 7l-4 8M7 15l5 7 5-7" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/></svg>
+            <span>Roll race</span>
+          </button>
+        </div>
+        <input id="raceCustom" type="text" maxlength="40" placeholder="Type your race, e.g. Moth-folk" aria-label="Custom race" hidden>
       </div>
       <label class="field"><span class="label">Player</span><input id="player" type="text"></label>
       <div class="field">
@@ -423,6 +437,11 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   const TRAIN = 2, MIN = -1, MAX_LOWERED = 2;
   const DCS = [10, 15, 20, 25, 30];
   const STORE = "balanced-build-sheet-v3";
+  const RACES = {
+    "Common": ["Human", "Elf", "High Elf", "Wood Elf", "Dark Elf", "Half-Elf", "Dwarf", "Hill Dwarf", "Mountain Dwarf", "Halfling", "Gnome", "Half-Orc", "Orc", "Tiefling", "Dragonborn"],
+    "Uncommon": ["Aasimar", "Genasi", "Goliath", "Firbolg", "Tabaxi", "Kenku", "Tortle", "Lizardfolk", "Triton", "Goblin", "Hobgoblin", "Bugbear", "Kobold", "Changeling", "Warforged", "Satyr", "Centaur", "Minotaur", "Harengon", "Owlin", "Fairy", "Githyanki", "Yuan-ti"]
+  };
+  const RACE_LIST = Object.values(RACES).flat();
   // Class presets: ability priority (highest first), one ability lowered to −1, skills in training order
   const CLASSES = {
     Barbarian: { role: "Raging front-liner who shrugs off hits", pri: ["STR", "CON", "DEX", "WIS"], dump: "INT", skills: ["Athletics", "Intimidation", "Perception", "Survival", "Animal Handling", "Nature", "Acrobatics"] },
@@ -570,7 +589,7 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   const tierOf = (lvl) => TIERS.find((t) => lvl >= t.from && lvl <= t.to);
 
   function blank() {
-    const s = { name: "", player: "", level: 1, levelLocked: false, cls: "", example: false, ab: {}, trained: [] };
+    const s = { name: "", race: "", raceCustom: false, player: "", level: 1, levelLocked: false, cls: "", example: false, ab: {}, trained: [] };
     ABIL.forEach((a) => (s.ab[a.k] = 0));
     return s;
   }
@@ -585,6 +604,8 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     const s = blank();
     if (!o || typeof o !== "object") return s;
     ["name", "player"].forEach((k) => { if (typeof o[k] === "string") s[k] = o[k].slice(0, 80); });
+    if (typeof o.race === "string") s.race = o.race.slice(0, 40);
+    s.raceCustom = !!o.raceCustom || (!!s.race && !RACE_LIST.includes(s.race));
     s.level = clampInt(o.level, 1, 20, 1);
     s.example = !!o.example;
     s.levelLocked = !!o.levelLocked;
@@ -635,7 +656,7 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     const v = (k) => (L[k] || "").trim().replace(/[.!\s]+$/, "");
     const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
     const full = S.name.trim() || "This hero", first = S.name.trim() ? full.split(/\s+/)[0] : "This hero";
-    const people = v("people").replace(/^(a|an|the)\s+/i, ""), what = [people, S.cls].filter(Boolean).join(" ");
+    const people = (v("people") || S.race.trim()).replace(/^(a|an|the)\s+/i, ""), what = [people, S.cls].filter(Boolean).join(" ");
     const out = [];
     let s1 = what ? `${full} is ${/^[aeiou]/i.test(what) ? "an" : "a"} ${what}` : v("home") ? `${full} comes` : "";
     if (v("home")) s1 += ` from ${v("home")}`;
@@ -665,6 +686,18 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   $("ownIntro").addEventListener("input", (e) => { L.own = e.target.value.slice(0, 600); renderLore(); });
   $("helpLore").addEventListener("change", (e) => { L.guided = e.target.checked; renderLore(); });
   $("lore").addEventListener("input", (e) => { const k = e.target.dataset.lore; if (k) { L[k] = e.target.value.slice(0, 60); renderLore(); } });
+
+  $("race").innerHTML = `<option value="">Choose a race…</option>` +
+    Object.entries(RACES).map(([g, list]) => `<optgroup label="${g}">${list.map((r) => `<option>${r}</option>`).join("")}</optgroup>`).join("") +
+    `<option value="__custom">Custom race…</option>`;
+  $("race").addEventListener("change", (e) => {
+    const v = e.target.value;
+    S.raceCustom = v === "__custom";
+    S.race = S.raceCustom ? $("raceCustom").value.trim().slice(0, 40) : v;
+    touched(); fill(); render();
+    if (S.raceCustom) $("raceCustom").focus();
+  });
+  $("raceCustom").addEventListener("input", (e) => { S.race = e.target.value.slice(0, 40); touched(); render(); });
 
   // Build ability cards once
   $("abilities").innerHTML = ABIL.map((a) =>
@@ -815,6 +848,9 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
 
   function fill() {
     $("name").value = S.name; $("player").value = S.player; $("level").value = S.level;
+    $("race").value = S.raceCustom ? "__custom" : S.race;
+    $("raceCustom").hidden = !S.raceCustom;
+    if (S.raceCustom && $("raceCustom").value !== S.race) $("raceCustom").value = S.race;
     $("level").disabled = S.levelLocked;
     $("rollBtn").disabled = S.levelLocked || rolling;
     $("rollTxt").textContent = S.levelLocked ? "Locked" : "Roll level";
@@ -828,6 +864,27 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   const FAM_A = ["Ash", "Black", "Bright", "Storm", "Thorn", "Iron", "Silver", "Oak", "Raven", "Stone", "Frost", "Gold", "Moon", "Red", "Shadow", "Star", "Swift", "Wolf", "Dawn", "Ember", "Fair", "Grey", "High", "Hollow", "Mist", "River", "Rose", "Snow", "Sun", "Wind", "Winter", "Amber", "Bramble", "Copper", "Deep", "Elder", "Glen", "Hart", "Lark", "Moss", "Night", "Pine", "Quill", "Salt", "Thistle", "Vale", "Fern", "Flint"];
   const FAM_B = ["blade", "brook", "wood", "fall", "field", "ford", "forge", "heart", "helm", "hill", "hold", "mane", "mantle", "shield", "song", "vale", "water", "wind", "whisper", "crest", "born", "bough", "brand", "bright", "cloak", "cliff", "dale", "fire", "gard", "glade", "horn", "leaf", "light", "more", "ridge", "run", "shade", "spark", "spire", "stride", "thorn", "ward", "weaver", "wick"];
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  let raceRolling = false;
+  $("raceRollBtn").addEventListener("click", () => {
+    if (raceRolling) return;
+    raceRolling = true;
+    const btn = $("raceRollBtn"), sel = $("race");
+    btn.disabled = true; sel.disabled = true;
+    const finish = () => {
+      raceRolling = false;
+      let r; do { r = pick(RACE_LIST); } while (r === S.race && RACE_LIST.length > 1);
+      S.race = r; S.raceCustom = false;
+      touched(); fill(); render();
+      btn.disabled = false; sel.disabled = false;
+      btn.classList.remove("rolling"); sel.classList.remove("rolling");
+      sel.classList.remove("landed"); void sel.offsetWidth; sel.classList.add("landed");
+      msg(`Rolled the race ${S.race}.`);
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { finish(); return; }
+    btn.classList.add("rolling"); sel.classList.add("rolling");
+    $("raceCustom").hidden = true;
+    spin(() => { sel.value = pick(RACE_LIST); }, finish);
+  });
   function randomName() {
     let a, b;
     do { a = pick(FAM_A); b = pick(FAM_B); } while (a.toLowerCase() === b || a.toLowerCase().endsWith(b));
@@ -1033,7 +1090,7 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     F("bold", 26, ink);
     doc.text(S.name || "Unnamed hero", M, M + 10);
     F("italic", 11, muted);
-    doc.text(`Player: ${S.player || "-"}     ${S.cls ? "Class: " + S.cls + "     " : ""}Level ${S.level}     Tier ${t.n} (levels ${t.from}-${t.to})`, M, M + 17);
+    doc.text(`Player: ${S.player || "-"}     ${S.race.trim() ? "Race: " + S.race.trim() + "     " : ""}${S.cls ? "Class: " + S.cls + "     " : ""}Level ${S.level}     Tier ${t.n} (levels ${t.from}-${t.to})`, M, M + 17);
     rule(M + 21);
 
     // About: the player's intro, straight under the header
