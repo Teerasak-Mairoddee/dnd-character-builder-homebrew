@@ -290,19 +290,15 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   </section>
 
   <section class="panel">
-    <details>
-      <summary>How your character grows</summary>
-      <div class="caps" id="capsBox"></div>
-    </details>
-  </section>
-
-  <section class="panel">
-    <details>
-      <summary>Character shape</summary>
-      <p class="note">How your numbers spread out. The further a point reaches toward the outer ring, the better you are at it. The outer ring is the best roll your tier allows, and the dashed ring is +0.</p>
-      <div class="radars">
-        <figure class="radar"><figcaption>Abilities</figcaption><div id="radarAb"></div></figure>
-        <figure class="radar"><figcaption>Skills</figcaption><div id="radarSk"></div></figure>
+    <details id="loreBox">
+      <summary>About your character</summary>
+      <p class="note">What is your lore?</p>
+      <label class="own" id="ownBox"><span class="label">Your intro</span><textarea id="ownIntro" maxlength="600" placeholder="Who is your character? Where are they from, what do they want, and what gets in their way?"></textarea><span class="count" id="ownCount"></span></label>
+      <label class="help-lore"><input type="checkbox" id="helpLore"> I need help with my lore</label>
+      <div id="guided" hidden>
+        <p class="note" style="margin-top:8px">Answer any of these in a few words. Your answers are joined into an intro below.</p>
+        <div class="lore" id="lore"></div>
+        <div class="intro"><span class="label">Your intro</span><p id="introText"></p></div>
       </div>
     </details>
   </section>
@@ -322,16 +318,20 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
   </section>
 
   <section class="panel">
-    <details id="loreBox">
-      <summary>About your character</summary>
-      <p class="note">What is your lore?</p>
-      <label class="own" id="ownBox"><span class="label">Your intro</span><textarea id="ownIntro" maxlength="600" placeholder="Who is your character? Where are they from, what do they want, and what gets in their way?"></textarea><span class="count" id="ownCount"></span></label>
-      <label class="help-lore"><input type="checkbox" id="helpLore"> I need help with my lore</label>
-      <div id="guided" hidden>
-        <p class="note" style="margin-top:8px">Answer any of these in a few words. Your answers are joined into an intro below.</p>
-        <div class="lore" id="lore"></div>
-        <div class="intro"><span class="label">Your intro</span><p id="introText"></p></div>
+    <details>
+      <summary>Character shape</summary>
+      <p class="note">How your numbers spread out. The further a point reaches toward the outer ring, the better you are at it. The outer ring is the best roll your tier allows, and the dashed ring is +0.</p>
+      <div class="radars">
+        <figure class="radar"><figcaption>Abilities</figcaption><div id="radarAb"></div></figure>
+        <figure class="radar"><figcaption>Skills</figcaption><div id="radarSk"></div></figure>
       </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>How your character grows</summary>
+      <div class="caps" id="capsBox"></div>
     </details>
   </section>
 
