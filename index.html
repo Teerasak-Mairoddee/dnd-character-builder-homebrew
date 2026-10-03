@@ -1047,17 +1047,18 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
       y += 6 + lines.length * 11 * 1.3 * 0.3528 + 5;
     }
 
-    // Difficulty strip
-    heading("Difficulty", y);
-    const tiers = [["Easy", 10], ["Medium", 15], ["Hard", 20], ["Very Hard", 25], ["Nearly Impossible", 30]];
-    const tw = W / tiers.length;
-    tiers.forEach(([n, dc], i) => {
-      const x = M + i * tw;
-      doc.setFillColor(...parch); doc.setDrawColor(...line); doc.setLineWidth(0.3); doc.rect(x, y + 2.5, tw, 14, "FD");
-      F("bold", 15, accent); doc.text(String(dc), x + tw / 2, y + 9.5, { align: "center" });
-      F("italic", 9, muted); doc.text(n, x + tw / 2, y + 14.5, { align: "center" });
-    });
-    y += 21;
+    // Difficulty strip, drawn under the odds page heading
+    const dcStrip = (y) => {
+      heading("Difficulty", y);
+      const tiers = [["Easy", 10], ["Medium", 15], ["Hard", 20], ["Very Hard", 25], ["Nearly Impossible", 30]];
+      const tw = W / tiers.length;
+      tiers.forEach(([n, dc], i) => {
+        const x = M + i * tw;
+        doc.setFillColor(...parch); doc.setDrawColor(...line); doc.setLineWidth(0.3); doc.rect(x, y + 2.5, tw, 14, "FD");
+        F("bold", 15, accent); doc.text(String(dc), x + tw / 2, y + 9.5, { align: "center" });
+        F("italic", 9, muted); doc.text(n, x + tw / 2, y + 14.5, { align: "center" });
+      });
+    };
 
     // Ability boxes, 2 columns x 3 rows
     const gap = 6, bw = (W - gap) / 2, bh = 50;
@@ -1162,11 +1163,12 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     doc.setFont("times", "italic"); doc.setFontSize(10); col(muted);
     doc.text("Chance to meet or beat each DC on a plain d20.  auto = no roll needed.  X = needs help or a better plan.", M, M + 16.5);
     rule(M + 20.5);
+    dcStrip(M + 29);
     const fills = { p0: [221, 211, 194], p1: [232, 192, 180], p2: [240, 216, 176], p3: [234, 228, 184], p4: [212, 226, 188], p5: [188, 212, 168] };
     const band = (p) => (p <= 0 ? "p0" : p <= 20 ? "p1" : p <= 40 ? "p2" : p <= 60 ? "p3" : p <= 90 ? "p4" : "p5");
     const cols = [["Roll", 62], ["Number", 20], ["Easy 10", 20], ["Medium 15", 20], ["Hard 20", 20], ["V. Hard 25", 20], ["Near Imp. 30", 20]];
-    let ty = M + 28;
-    const rowH = 8.4;
+    let ty = M + 51;
+    const rowH = 8;
     let cx = M;
     doc.setFont("times", "bold"); doc.setFontSize(8); col(muted);
     cols.forEach(([h, w], i) => { doc.text(h.toUpperCase(), i ? cx + w / 2 : cx + 1, ty, { align: i ? "center" : "left" }); cx += w; });
