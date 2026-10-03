@@ -398,6 +398,21 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     "Performance": ["Entertain, act, play music and hold a crowd's attention, for coin or as a distraction.", "Entertain a tavern crowd (Easy) or move a hostile audience (Hard)."],
     "Persuasion": ["Negotiate, convince, make friends with people and get better deals and favours.", "Get a friendly person's help (Easy) or win over someone unfriendly (Hard)."]
   };
+  // PDF strengths page: how to lean on a strong ability, and what to steer around when one is weak
+  const PLAYBOOK = {
+    STR: { lean: ["Take the front. Break doors, shove enemies off ledges and carry the wounded.", "Grab slippery foes, like a fleeing caster, and hold them in place.", "Volunteer for climbs, swims and feats of muscle."],
+           avoid: ["Avoid grapples, heavy lifting and climbing under pressure.", "Let a stronger ally take the rope or the stuck door.", "Look for a tool or a clever angle instead of brute force."] },
+    DEX: { lean: ["Scout ahead and take point in the dark.", "Handle locks, traps and anything that needs quick, careful hands.", "Strike first and keep moving so you're hard to pin down."],
+           avoid: ["Leave sneaking and trap work to someone nimbler.", "Don't lead the way over ice, beams or rubble.", "Expect to be heard. Plan for being spotted."] },
+    CON: { lean: ["Stand in the way. You can take hits and shrug off poison others can't.", "Push through forced marches, cold, hunger and sickness.", "Be the one who tries the strange potion or holds the line."],
+           avoid: ["Stay out of long chases, drinking contests and bad air.", "Don't stand at the front of a fight. Let tougher allies take the blows.", "Rest when you can and carry remedies."] },
+    INT: { lean: ["Ask the DM what you'd know about ruins, magic and history.", "Search rooms and puzzle out traps, codes and mechanisms.", "Plan the job. Your knowledge sets up everyone else's success."],
+           avoid: ["Don't fake knowledge. Ask the party's scholar.", "Steer clear of unknown magic items and rituals without help.", "Leave puzzles and lore checks to someone sharper."] },
+    WIS: { lean: ["Keep watch and read people. Call out lies and ambushes.", "Track, guide and keep the party fed and safe in the wild.", "Look after the wounded and any animals."],
+           avoid: ["Don't take night watch alone or trust strangers quickly.", "Let someone else guide through the wilds or read a tricky character.", "Have a sharp-eyed ally check before you open the door."] },
+    CHA: { lean: ["Be the face. Talk first, bargain, charm or threaten.", "Turn fights into deals and enemies into contacts.", "Use a show or a lie to pull eyes away while others act."],
+           avoid: ["Let someone else do the talking in tense scenes.", "Don't bluff powerful people or haggle when it really matters.", "Earn trust with deeds rather than words."] }
+  };
   // Tier: levels covered, ability points, highest ability, skill trainings
   const TIERS = [
     { n: 1, from: 1, to: 4, pts: 6, max: 3, train: 4 },
@@ -1071,7 +1086,7 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     });
     let ny = y + 3 * bh + 2 * 5 + 8;
 
-    // Notes area for the homebrew rules; a long intro leaves no room, so they move to the foot of page 2
+    // Notes area for the homebrew rules; a long intro leaves no room, and page 2 has notes space too
     const notes = (ny) => {
       heading("Notes", ny);
       F("italic", 9, muted); doc.text("Health, gear, powers and anything else from your homebrew rules", M + 16, ny);
@@ -1083,7 +1098,64 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     F("italic", 8, muted);
     doc.text("DnD Homebrew  -  Character Build Sheet", 105, 297 - 11, { align: "center" });
 
-    // Page 2: odds of meeting each DC for every ability and skill
+    // Page 2: playing to your strengths, with the rest of the page for notes
+    doc.addPage(); page();
+    const hero = S.name.trim() || "Unnamed hero";
+    F("bold", 20, ink); doc.text(`${hero}: playing to your strengths`, M, M + 10);
+    F("italic", 10, muted); doc.text("Your strongest and weakest abilities, and how to use them at the table.", M, M + 16.5);
+    rule(M + 20.5);
+    // Rank the six abilities: higher number first, then more trained skills
+    const rank = ABIL.map((a, i) => ({ a, i, v: S.ab[a.k], tr: a.skills.filter((sk) => S.trained.includes(sk)).length }))
+      .sort((x, z) => z.v - x.v || z.tr - x.tr || x.i - z.i);
+    const best = rank[0], worst = rank[rank.length - 1];
+    const odds = (n, dc) => { const need = dc - n; return need <= 1 ? 100 : need > 20 ? 0 : (21 - need) * 5; };
+    let sy = M + 30;
+    const para = (txt, x, w, style = "normal", size = 11, c = ink) => {
+      F(style, size, c); const ls = doc.splitTextToSize(txt, w); doc.text(ls, x, sy, { lineHeightFactor: 1.3 }); sy += ls.length * size * 1.3 * 0.3528;
+    };
+    const bullets = (items) => items.forEach((b) => { doc.setFillColor(...accent); doc.circle(M + 2.2, sy - 1.3, 0.9, "F"); para(b, M + 6, W - 6); sy += 1.6; });
+    // Strength (a build with nothing spent yet has no standout to describe)
+    if (best.v === worst.v && !S.trained.length) {
+      para("Nothing stands out yet. Spend your ability points and pick your trained skills on the build sheet, then download again to see your strengths here.", M, W);
+      sy += 2;
+    } else {
+    heading("Your strength", sy); sy += 7;
+    F("bold", 16, ink); doc.text(best.a.name, M, sy);
+    F("bold", 16, accent); doc.text(pm(best.v), M + doc.getTextWidth(best.a.name + "  "), sy); sy += 6;
+    para(best.a.what ? best.a.what + "." : "", M, W, "italic", 10.5, muted); sy += 2;
+    const top = best.a.skills.map((sk) => ({ sk, n: best.v + (S.trained.includes(sk) ? TRAIN : 0), on: S.trained.includes(sk) })).sort((x, z) => z.n - x.n);
+    const bestN = top.length ? top[0].n : best.v;
+    top.forEach((r) => {
+      F(r.on ? "bold" : "normal", 11, r.on ? ink : muted); doc.text(r.sk + (r.on ? " (trained)" : ""), M + 6, sy);
+      F("bold", 11, r.on ? accent : ink); doc.text(pm(r.n), M + 62, sy, { align: "right" });
+      para(SK_INFO[r.sk][0], M + 68, W - 68, "normal", 10, muted); sy += 1.4;
+    });
+    sy += 1;
+    para(`Your best roll here is ${pm(bestN)}. It beats Medium (15) ${odds(bestN, 15)}% of the time and Hard (20) ${odds(bestN, 20)}% of the time.`, M, W, "italic", 10.5, muted);
+    sy += 4;
+    heading("Play to it", sy); sy += 6;
+    bullets(PLAYBOOK[best.a.k].lean);
+    sy += 4;
+    // Weakness
+    heading("Watch out for", sy); sy += 7;
+    if (worst.v === best.v) {
+      para("Your abilities are even, so there's no weak spot to steer around. There's no standout either, so pick a role with your party.", M, W);
+    } else {
+      F("bold", 16, ink); doc.text(worst.a.name, M, sy);
+      F("bold", 16, accent); doc.text(pm(worst.v), M + doc.getTextWidth(worst.a.name + "  "), sy); sy += 6;
+      para(`A ${pm(worst.v)} beats Medium (15) only ${odds(worst.v, 15)}% of the time.` + (worst.a.skills.length ? ` Rolls that lean on it: ${worst.a.skills.join(", ")}.` : ""), M, W, "italic", 10.5, muted);
+      sy += 4;
+      heading("Avoid", sy); sy += 6;
+      bullets(PLAYBOOK[worst.a.k].avoid);
+    }
+    }
+    // Whatever is left becomes notes
+    sy += 6;
+    if (297 - M - 4 - sy >= 14) notes(sy);
+    F("italic", 8, muted);
+    doc.text("DnD Homebrew  -  Character Build Sheet  -  page 2", 105, 297 - 11, { align: "center" });
+
+    // Page 3: odds of meeting each DC for every ability and skill
     doc.addPage(); page();
     doc.setFont("times", "bold"); doc.setFontSize(20); col(ink);
     doc.text(`${S.name || "Unnamed hero"}: odds against each difficulty`, M, M + 10);
@@ -1129,9 +1201,8 @@ textarea { width: 100%; min-height: 4em; font-family: var(--mono); font-size: .8
     let lx = M;
     doc.setFont("times", "normal"); doc.setFontSize(8);
     legend.forEach(([k, t]) => { doc.setFillColor(...fills[k]); doc.rect(lx, ty - 3.5, 22, 5.5, "F"); col(ink); doc.text(t, lx + 11, ty, { align: "center" }); lx += 24; });
-    if (!notesHere) notes(ty + 12);
     doc.setFontSize(7); col(muted);
-    doc.setFont("times", "italic"); doc.text("DnD Homebrew  -  Character Build Sheet  -  page 2", 105, 297 - 11, { align: "center" });
+    doc.setFont("times", "italic"); doc.text("DnD Homebrew  -  Character Build Sheet  -  page 3", 105, 297 - 11, { align: "center" });
     return doc.output("blob");
   }
 
